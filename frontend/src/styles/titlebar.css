@@ -1,0 +1,80 @@
+/* 自定义标题栏样式 */
+
+.titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 32px;
+    background-color: var(--toolbar-bg);
+    border-bottom: 1px solid var(--toolbar-border);
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.titlebar-drag-region {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 32px;
+    -webkit-app-region: drag;
+}
+
+.titlebar-title {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+.titlebar-controls {
+    display: flex;
+    height: 100%;
+    -webkit-app-region: no-drag;
+}
+
+.titlebar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.titlebar-btn:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.titlebar-btn:active {
+    background-color: var(--border);
+}
+
+.titlebar-btn-close:hover {
+    background-color: #e81123;
+    color: white;
+}
+
+.titlebar-btn-close:active {
+    background-color: #bf0f1d;
+}
+
+.titlebar-btn svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* 最大化状态下的图标变化 */
+.titlebar-btn.maximized svg rect {
+    x: 2.5;
+    y: 2.5;
+    width: 7;
+    height: 7;
+}

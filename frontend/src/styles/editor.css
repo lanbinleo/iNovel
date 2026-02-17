@@ -1,0 +1,142 @@
+/* 编辑器样式 - Typora 风格，衬线字体 */
+
+/* 编辑器容器 */
+.editor {
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    color: var(--editor-text);
+    border: none;
+    outline: none;
+    padding: 80px 60px;
+    font-size: 18px;
+    line-height: 2;
+    font-family: var(--font-serif);
+    overflow-y: auto;
+    overflow-x: hidden;
+    cursor: text;
+    transition: color 0.4s ease;
+}
+
+/* 宽度模式 */
+.editor.width-narrow {
+    max-width: 580px;
+    margin: 0 auto;
+    padding-left: 40px;
+    padding-right: 40px;
+}
+
+.editor.width-medium {
+    max-width: 720px;
+    margin: 0 auto;
+    padding-left: 50px;
+    padding-right: 50px;
+}
+
+.editor.width-wide {
+    max-width: 100%;
+    padding-left: 100px;
+    padding-right: 100px;
+}
+
+/* 字体大小 */
+.editor.font-small {
+    font-size: 16px;
+    line-height: 1.9;
+}
+
+.editor.font-medium {
+    font-size: 18px;
+    line-height: 2;
+}
+
+.editor.font-large {
+    font-size: 20px;
+    line-height: 2.1;
+}
+
+/* 段落样式 */
+.editor p {
+    text-indent: 2em;
+    margin-bottom: 0.8em;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* 第一行（标题）样式 - 加粗变大 */
+.editor p:first-child {
+    text-indent: 0;
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 1.2em;
+    line-height: 1.4;
+}
+
+/* 空段落保持高度 */
+.editor p:empty::before,
+.editor p br:only-child::before {
+    content: '\200b';
+}
+
+/* 加粗样式 */
+.editor strong,
+.editor b {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* 斜体样式 */
+.editor em,
+.editor i {
+    font-style: italic;
+}
+
+/* 滚动条样式 */
+.editor::-webkit-scrollbar {
+    width: 6px;
+}
+
+.editor::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.editor::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+}
+
+.editor::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+}
+
+/* 选中文字样式 */
+.editor::selection,
+.editor *::selection {
+    background-color: var(--editor-selection);
+}
+
+/* 占位符样式 */
+.editor:empty::before {
+    content: attr(data-placeholder);
+    color: var(--editor-placeholder);
+    pointer-events: none;
+    font-style: italic;
+}
+
+/* 聚焦状态 */
+.editor:focus {
+    outline: none;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .editor {
+        padding: 40px 24px;
+        font-size: 16px;
+    }
+
+    .editor p {
+        text-indent: 2em;
+        margin-bottom: 0.6em;
+    }
+}

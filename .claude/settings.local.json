@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go version:*)",
+      "Bash(node --version:*)",
+      "Bash(npm --version)",
+      "Bash(go install:*)",
+      "Bash(wails version:*)",
+      "Bash(npm install)",
+      "Bash(wails dev)",
+      "Bash(timeout:*)",
+      "Bash(npm install html2canvas)",
+      "Bash(go get:*)",
+      "Bash(go build:*)",
+      "Bash(wails generate:*)",
+      "Bash(npm run build)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
