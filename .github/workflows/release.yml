@@ -19,7 +19,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.23'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -37,7 +37,23 @@ jobs:
       - name: Get version from tag
         id: version
         shell: bash
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Tag version: $VERSION"
+
+      - name: Check if prerelease
+        id: prerelease
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          if [[ "$VERSION" =~ -(alpha|beta|rc)\. ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "🔨 This is a prerelease version"
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "✅ This is a stable release"
+          fi
 
       - name: Build
         run: wails build -ldflags "-X main.Version=${{ steps.version.outputs.VERSION }}"
@@ -49,7 +65,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          draft: true
+          draft: false
+          prerelease: ${{ steps.prerelease.outputs.is_prerelease }}
           generate_release_notes: false
           body_path: .github/RELEASE_TEMPLATE.md
           files: build/bin/iNovel-windows-amd64.exe
