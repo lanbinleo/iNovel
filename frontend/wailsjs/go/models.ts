@@ -27,6 +27,7 @@ export namespace main {
 	export class ChapterContent {
 	    id: string;
 	    title: string;
+	    outline: string;
 	    content: string;
 	
 	    static createFrom(source: any = {}) {
@@ -37,6 +38,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
 	        this.title = source["title"];
+	        this.outline = source["outline"];
 	        this.content = source["content"];
 	    }
 	}

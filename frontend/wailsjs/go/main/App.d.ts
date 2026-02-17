@@ -16,7 +16,11 @@ export function CreateNovel(arg1:string):Promise<main.NovelSummary>;
 
 export function DeleteAIProvider(arg1:string):Promise<void>;
 
+export function DeleteChapter(arg1:string):Promise<void>;
+
 export function DeleteFile(arg1:string):Promise<void>;
+
+export function DeleteNovel(arg1:string):Promise<void>;
 
 export function ExportAsImagePath():Promise<string>;
 
@@ -64,7 +68,7 @@ export function OpenWorkspace():Promise<main.Workspace>;
 
 export function RenameFile(arg1:string,arg2:string):Promise<string>;
 
-export function SaveChapterContent(arg1:string,arg2:string,arg3:string):Promise<void>;
+export function SaveChapterContent(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
 
 export function SaveFile(arg1:string,arg2:string):Promise<string>;
 
@@ -81,6 +85,8 @@ export function SetEditorWidth(arg1:string):Promise<void>;
 export function SetLastWorkspace(arg1:string):Promise<void>;
 
 export function SetTheme(arg1:string):Promise<void>;
+
+export function UpdateNovel(arg1:string,arg2:string,arg3:string):Promise<main.NovelSummary>;
 
 export function UpsertAIProvider(arg1:main.AIProvider):Promise<main.AIProvider>;
 

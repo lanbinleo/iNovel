@@ -24,6 +24,7 @@ type ChapterSummary struct {
 type ChapterContent struct {
 	ID      string `json:"id"`
 	Title   string `json:"title"`
+	Outline string `json:"outline"`
 	Content string `json:"content"`
 }
 
@@ -104,6 +105,45 @@ func (a *App) CreateNovel(title string) (*NovelSummary, error) {
 	}, nil
 }
 
+func (a *App) UpdateNovel(novelID string, title string, summary string) (*NovelSummary, error) {
+	db, err := a.ensureDB()
+	if err != nil {
+		return nil, err
+	}
+
+	trimmed := strings.TrimSpace(title)
+	if trimmed == "" {
+		trimmed = "未命名小说"
+	}
+	trimmedSummary := strings.TrimSpace(summary)
+
+	nowStr := time.Now().UTC().Format(time.RFC3339)
+	_, err = db.Exec(
+		`UPDATE novels SET title = ?, summary = ?, updated_at = ? WHERE id = ?;`,
+		trimmed, trimmedSummary, nowStr, novelID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &NovelSummary{
+		ID:        novelID,
+		Title:     trimmed,
+		Summary:   trimmedSummary,
+		UpdatedAt: nowStr,
+	}, nil
+}
+
+func (a *App) DeleteNovel(novelID string) error {
+	db, err := a.ensureDB()
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`DELETE FROM novels WHERE id = ?;`, novelID)
+	return err
+}
+
 func (a *App) ListChapters(novelID string) ([]ChapterSummary, error) {
 	db, err := a.ensureDB()
 	if err != nil {
@@ -172,6 +212,34 @@ func (a *App) CreateChapter(novelID string, title string) (*ChapterSummary, erro
 	}, nil
 }
 
+func (a *App) DeleteChapter(chapterID string) error {
+	db, err := a.ensureDB()
+	if err != nil {
+		return err
+	}
+
+	nowStr := time.Now().UTC().Format(time.RFC3339)
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	var novelID string
+	if err := tx.QueryRow(`SELECT novel_id FROM chapters WHERE id = ?;`, chapterID).Scan(&novelID); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if _, err := tx.Exec(`DELETE FROM chapters WHERE id = ?;`, chapterID); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	_, _ = tx.Exec(`UPDATE novels SET updated_at = ? WHERE id = ?;`, nowStr, novelID)
+
+	return tx.Commit()
+}
+
 func (a *App) GetChapterContent(chapterID string) (*ChapterContent, error) {
 	db, err := a.ensureDB()
 	if err != nil {
@@ -179,7 +247,8 @@ func (a *App) GetChapterContent(chapterID string) (*ChapterContent, error) {
 	}
 
 	var title string
-	if err := db.QueryRow(`SELECT title FROM chapters WHERE id = ?;`, chapterID).Scan(&title); err != nil {
+	var outline string
+	if err := db.QueryRow(`SELECT title, outline FROM chapters WHERE id = ?;`, chapterID).Scan(&title, &outline); err != nil {
 		return nil, err
 	}
 
@@ -207,11 +276,12 @@ func (a *App) GetChapterContent(chapterID string) (*ChapterContent, error) {
 	return &ChapterContent{
 		ID:      chapterID,
 		Title:   title,
+		Outline: outline,
 		Content: content,
 	}, nil
 }
 
-func (a *App) SaveChapterContent(chapterID string, title string, content string) error {
+func (a *App) SaveChapterContent(chapterID string, title string, outline string, content string) error {
 	db, err := a.ensureDB()
 	if err != nil {
 		return err
@@ -241,7 +311,7 @@ func (a *App) SaveChapterContent(chapterID string, title string, content string)
 		return err
 	}
 
-	_, err = tx.Exec(`UPDATE chapters SET title = ?, updated_at = ? WHERE id = ?;`, trimmedTitle, nowStr, chapterID)
+	_, err = tx.Exec(`UPDATE chapters SET title = ?, outline = ?, updated_at = ? WHERE id = ?;`, trimmedTitle, outline, nowStr, chapterID)
 	if err != nil {
 		tx.Rollback()
 		return err

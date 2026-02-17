@@ -30,8 +30,16 @@ export function DeleteAIProvider(arg1) {
   return window['go']['main']['App']['DeleteAIProvider'](arg1);
 }
 
+export function DeleteChapter(arg1) {
+  return window['go']['main']['App']['DeleteChapter'](arg1);
+}
+
 export function DeleteFile(arg1) {
   return window['go']['main']['App']['DeleteFile'](arg1);
+}
+
+export function DeleteNovel(arg1) {
+  return window['go']['main']['App']['DeleteNovel'](arg1);
 }
 
 export function ExportAsImagePath() {
@@ -126,8 +134,8 @@ export function RenameFile(arg1, arg2) {
   return window['go']['main']['App']['RenameFile'](arg1, arg2);
 }
 
-export function SaveChapterContent(arg1, arg2, arg3) {
-  return window['go']['main']['App']['SaveChapterContent'](arg1, arg2, arg3);
+export function SaveChapterContent(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['SaveChapterContent'](arg1, arg2, arg3, arg4);
 }
 
 export function SaveFile(arg1, arg2) {
@@ -160,6 +168,10 @@ export function SetLastWorkspace(arg1) {
 
 export function SetTheme(arg1) {
   return window['go']['main']['App']['SetTheme'](arg1);
+}
+
+export function UpdateNovel(arg1, arg2, arg3) {
+  return window['go']['main']['App']['UpdateNovel'](arg1, arg2, arg3);
 }
 
 export function UpsertAIProvider(arg1) {

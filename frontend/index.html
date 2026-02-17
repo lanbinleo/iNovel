@@ -55,6 +55,13 @@
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                 </svg>
             </button>
+            <button id="import-btn" class="icon-btn" title="导入小说" style="--wails-draggable:no-drag">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+            </button>
             <button id="export-btn" class="icon-btn" title="导出" style="--wails-draggable:no-drag">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -63,19 +70,6 @@
                 </svg>
             </button>
             <div class="toolbar-divider"></div>
-            <button id="new-file-btn" class="icon-btn" title="新建文档" style="--wails-draggable:no-drag">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="12" y1="18" x2="12" y2="12"/>
-                    <line x1="9" y1="15" x2="15" y2="15"/>
-                </svg>
-            </button>
-            <button id="open-file-btn" class="icon-btn" title="打开文件" style="--wails-draggable:no-drag">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                </svg>
-            </button>
             <button id="save-btn" class="icon-btn" title="保存 (Ctrl+S)" style="--wails-draggable:no-drag">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
@@ -103,83 +97,38 @@
     </div>
 
     <!-- 主内容区 -->
-        <div class="main-container">
-            <!-- 左侧侧边栏 -->
-            <div id="sidebar" class="sidebar">
-                <div class="sidebar-section">
-                    <div class="sidebar-header">
-                        <span class="sidebar-header-title">小说</span>
-                        <div class="sidebar-header-actions">
-                            <button id="new-novel-btn" class="sidebar-header-btn" title="新建小说">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <path d="M12 5v14M5 12h14"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="novel-list" class="sidebar-list">
-                        <div class="sidebar-list-empty">暂无小说</div>
+    <div class="main-container">
+        <!-- 左侧侧边栏 -->
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <span class="sidebar-header-title">小说</span>
+                    <div class="sidebar-header-actions">
+                        <button id="new-novel-btn" class="sidebar-header-btn" title="新建小说">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M12 5v14M5 12h14"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
-                <div class="sidebar-section">
-                    <div class="sidebar-header">
-                        <span class="sidebar-header-title">章节</span>
-                        <div class="sidebar-header-actions">
-                            <button id="new-chapter-btn" class="sidebar-header-btn" title="新建章节">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <path d="M12 5v14M5 12h14"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="chapter-list" class="sidebar-list">
-                        <div class="sidebar-list-empty">请选择小说</div>
-                    </div>
-                </div>
-                <div class="workspace-selector">
-                    <div class="workspace-actions">
-                        <button id="open-workspace-btn" class="workspace-action-btn" title="打开工作空间">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                        </svg>
-                    </button>
-                    <button id="save-workspace-btn" class="workspace-action-btn" title="保存工作空间">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                            <polyline points="17 21 17 13 7 13 7 21"/>
-                            <polyline points="7 3 7 8 15 8"/>
-                        </svg>
-                    </button>
-                    <button id="add-folder-btn" class="workspace-action-btn" title="添加文件夹">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                            <line x1="12" y1="11" x2="12" y2="17"/>
-                            <line x1="9" y1="14" x2="15" y2="14"/>
-                        </svg>
-                    </button>
-                </div>
-                <span id="workspace-name" class="workspace-name">未命名工作空间</span>
-            </div>
-            <div class="sidebar-header">
-                <span class="sidebar-header-title">文件</span>
-                <div class="sidebar-header-actions">
-                    <button id="new-folder-btn" class="sidebar-header-btn" title="新建文件夹">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                            <line x1="12" y1="11" x2="12" y2="17"/>
-                            <line x1="9" y1="14" x2="15" y2="14"/>
-                        </svg>
-                    </button>
-                    <button id="refresh-tree-btn" class="sidebar-header-btn" title="刷新">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <polyline points="23 4 23 10 17 10"/>
-                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-                        </svg>
-                    </button>
+                <div id="novel-list" class="sidebar-list">
+                    <div class="sidebar-list-empty">暂无小说</div>
                 </div>
             </div>
-            <div id="file-tree" class="file-tree">
-                <!-- 文件树将在这里动态生成 -->
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <span class="sidebar-header-title">章节</span>
+                    <div class="sidebar-header-actions">
+                        <button id="new-chapter-btn" class="sidebar-header-btn" title="新建章节">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M12 5v14M5 12h14"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="chapter-list" class="sidebar-list">
+                    <div class="sidebar-list-empty">请选择小说</div>
+                </div>
             </div>
             <!-- 版本信息 -->
             <div class="sidebar-footer">
@@ -201,6 +150,45 @@
                 class="editor"
                 data-placeholder="开始写作..."
             ></div>
+        </div>
+        <div class="inspector">
+            <div class="inspector-section">
+                <div class="inspector-title">章节大纲</div>
+                <textarea id="chapter-outline-input" class="inspector-textarea" placeholder="为本章节写一段梗概..." disabled></textarea>
+            </div>
+            <div class="inspector-section">
+                <div class="inspector-title">章节信息</div>
+                <div class="inspector-item">
+                    <span class="inspector-label">章节</span>
+                    <span id="chapter-info-title" class="inspector-value">-</span>
+                </div>
+                <div class="inspector-item">
+                    <span class="inspector-label">字数</span>
+                    <span id="chapter-info-words" class="inspector-value">0</span>
+                </div>
+                <div class="inspector-actions">
+                    <button id="chapter-delete-btn" class="inspector-btn danger" disabled>删除章节</button>
+                </div>
+            </div>
+            <div class="inspector-section">
+                <div class="inspector-title">小说信息</div>
+                <div class="inspector-item">
+                    <span class="inspector-label">当前小说</span>
+                    <span id="novel-info-title" class="inspector-value">-</span>
+                </div>
+                <div class="inspector-field">
+                    <label class="inspector-label" for="novel-title-input">标题</label>
+                    <input id="novel-title-input" class="inspector-input" type="text" placeholder="请输入小说标题" disabled />
+                </div>
+                <div class="inspector-field">
+                    <label class="inspector-label" for="novel-summary-input">简介</label>
+                    <textarea id="novel-summary-input" class="inspector-textarea" placeholder="为作品写一段简介..." disabled></textarea>
+                </div>
+                <div class="inspector-actions">
+                    <button id="novel-save-btn" class="inspector-btn primary" disabled>保存小说信息</button>
+                    <button id="novel-delete-btn" class="inspector-btn danger" disabled>删除小说</button>
+                </div>
+            </div>
         </div>
     </div>
 
