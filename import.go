@@ -11,12 +11,12 @@ import (
 )
 
 type Novel struct {
-	ID        string    `json:"id"`
-	Title     string    `json:"title"`
-	Summary   string    `json:"summary"`
-	MetaJSON  string    `json:"meta_json"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	Summary   string `json:"summary"`
+	MetaJSON  string `json:"meta_json"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 func (a *App) ImportNovelFromDialog() (*Novel, error) {
@@ -120,8 +120,8 @@ func (a *App) ImportNovelFromPath(path string) (*Novel, error) {
 		Title:     novelTitle,
 		Summary:   "",
 		MetaJSON:  "{}",
-		CreatedAt: now,
-		UpdatedAt: now,
+		CreatedAt: nowStr,
+		UpdatedAt: nowStr,
 	}, nil
 }
 

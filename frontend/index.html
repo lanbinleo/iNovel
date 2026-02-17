@@ -49,6 +49,12 @@
                     <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
                 </svg>
             </button>
+            <button id="settings-btn" class="icon-btn" title="设置" style="--wails-draggable:no-drag">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+            </button>
             <button id="export-btn" class="icon-btn" title="导出" style="--wails-draggable:no-drag">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -97,12 +103,42 @@
     </div>
 
     <!-- 主内容区 -->
-    <div class="main-container">
-        <!-- 左侧侧边栏 -->
-        <div id="sidebar" class="sidebar">
-            <div class="workspace-selector">
-                <div class="workspace-actions">
-                    <button id="open-workspace-btn" class="workspace-action-btn" title="打开工作空间">
+        <div class="main-container">
+            <!-- 左侧侧边栏 -->
+            <div id="sidebar" class="sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-header">
+                        <span class="sidebar-header-title">小说</span>
+                        <div class="sidebar-header-actions">
+                            <button id="new-novel-btn" class="sidebar-header-btn" title="新建小说">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M12 5v14M5 12h14"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="novel-list" class="sidebar-list">
+                        <div class="sidebar-list-empty">暂无小说</div>
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-header">
+                        <span class="sidebar-header-title">章节</span>
+                        <div class="sidebar-header-actions">
+                            <button id="new-chapter-btn" class="sidebar-header-btn" title="新建章节">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M12 5v14M5 12h14"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="chapter-list" class="sidebar-list">
+                        <div class="sidebar-list-empty">请选择小说</div>
+                    </div>
+                </div>
+                <div class="workspace-selector">
+                    <div class="workspace-actions">
+                        <button id="open-workspace-btn" class="workspace-action-btn" title="打开工作空间">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                         </svg>
@@ -157,11 +193,55 @@
 
         <!-- 编辑区 -->
         <div class="editor-container">
+            <div class="chapter-header">
+                <input id="chapter-title-input" class="chapter-title-input" type="text" placeholder="请选择章节" disabled />
+            </div>
             <div
                 id="editor"
                 class="editor"
                 data-placeholder="开始写作..."
             ></div>
+        </div>
+    </div>
+
+    <!-- 设置页面 -->
+    <div id="settings-page" class="settings-page hidden">
+        <div class="settings-panel">
+            <div class="settings-header">
+                <div class="settings-title">设置</div>
+                <button id="settings-close-btn" class="icon-btn settings-close-btn" title="关闭">
+                    <svg width="14" height="14" viewBox="0 0 12 12">
+                        <path d="M1 1L11 11M11 1L1 11" stroke="currentColor" stroke-width="1.2"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="settings-body">
+                <div class="settings-section">
+                    <div class="settings-section-title">基础</div>
+                    <div class="settings-item">
+                        <div class="settings-item-label">数据库模式</div>
+                        <div class="settings-item-value">单库（library.db）</div>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-item-label">主题与宽度</div>
+                        <div class="settings-item-value">通过工具栏按钮切换</div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-section-title">AI</div>
+                    <div class="settings-item">
+                        <div class="settings-item-label">Provider</div>
+                        <div class="settings-item-value">将在此页面配置（Phase 4）</div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-section-title">导入</div>
+                    <div class="settings-item">
+                        <div class="settings-item-label">Markdown / TXT</div>
+                        <div class="settings-item-value">将在此页面或工具栏提供入口</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

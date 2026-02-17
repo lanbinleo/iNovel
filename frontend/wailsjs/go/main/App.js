@@ -10,12 +10,20 @@ export function CheckUpdate() {
   return window['go']['main']['App']['CheckUpdate']();
 }
 
+export function CreateChapter(arg1, arg2) {
+  return window['go']['main']['App']['CreateChapter'](arg1, arg2);
+}
+
 export function CreateFile(arg1, arg2) {
   return window['go']['main']['App']['CreateFile'](arg1, arg2);
 }
 
 export function CreateFolder(arg1, arg2) {
   return window['go']['main']['App']['CreateFolder'](arg1, arg2);
+}
+
+export function CreateNovel(arg1) {
+  return window['go']['main']['App']['CreateNovel'](arg1);
 }
 
 export function DeleteAIProvider(arg1) {
@@ -36,6 +44,10 @@ export function ExportAsImagePathWithName(arg1) {
 
 export function ExportAsTxt(arg1) {
   return window['go']['main']['App']['ExportAsTxt'](arg1);
+}
+
+export function GetChapterContent(arg1) {
+  return window['go']['main']['App']['GetChapterContent'](arg1);
 }
 
 export function GetConfig() {
@@ -74,6 +86,14 @@ export function ListAIProviders() {
   return window['go']['main']['App']['ListAIProviders']();
 }
 
+export function ListChapters(arg1) {
+  return window['go']['main']['App']['ListChapters'](arg1);
+}
+
+export function ListNovels() {
+  return window['go']['main']['App']['ListNovels']();
+}
+
 export function LoadFileContent(arg1) {
   return window['go']['main']['App']['LoadFileContent'](arg1);
 }
@@ -104,6 +124,10 @@ export function OpenWorkspace() {
 
 export function RenameFile(arg1, arg2) {
   return window['go']['main']['App']['RenameFile'](arg1, arg2);
+}
+
+export function SaveChapterContent(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SaveChapterContent'](arg1, arg2, arg3);
 }
 
 export function SaveFile(arg1, arg2) {

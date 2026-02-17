@@ -24,11 +24,44 @@ export namespace main {
 	        this.is_default = source["is_default"];
 	    }
 	}
+	export class ChapterContent {
+	    id: string;
+	    title: string;
+	    content: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ChapterContent(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.title = source["title"];
+	        this.content = source["content"];
+	    }
+	}
+	export class ChapterSummary {
+	    id: string;
+	    title: string;
+	    outline: string;
+	    order_key: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ChapterSummary(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.title = source["title"];
+	        this.outline = source["outline"];
+	        this.order_key = source["order_key"];
+	    }
+	}
 	export class RecentFile {
 	    path: string;
 	    title: string;
-	    // Go type: time
-	    updated_at: any;
+	    updated_at: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new RecentFile(source);
@@ -38,26 +71,8 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.path = source["path"];
 	        this.title = source["title"];
-	        this.updated_at = this.convertValues(source["updated_at"], null);
+	        this.updated_at = source["updated_at"];
 	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
 	}
 	export class Config {
 	    recent_files: RecentFile[];
@@ -152,10 +167,8 @@ export namespace main {
 	    title: string;
 	    summary: string;
 	    meta_json: string;
-	    // Go type: time
-	    created_at: any;
-	    // Go type: time
-	    updated_at: any;
+	    created_at: string;
+	    updated_at: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Novel(source);
@@ -167,27 +180,27 @@ export namespace main {
 	        this.title = source["title"];
 	        this.summary = source["summary"];
 	        this.meta_json = source["meta_json"];
-	        this.created_at = this.convertValues(source["created_at"], null);
-	        this.updated_at = this.convertValues(source["updated_at"], null);
+	        this.created_at = source["created_at"];
+	        this.updated_at = source["updated_at"];
+	    }
+	}
+	export class NovelSummary {
+	    id: string;
+	    title: string;
+	    summary: string;
+	    updated_at: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new NovelSummary(source);
 	    }
 	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.title = source["title"];
+	        this.summary = source["summary"];
+	        this.updated_at = source["updated_at"];
+	    }
 	}
 	
 	export class UpdateInfo {

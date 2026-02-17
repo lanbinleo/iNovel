@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -222,13 +223,13 @@ func (a *App) migrateLegacyConfig(db *sql.DB) error {
 			return err
 		}
 		for _, rf := range legacy.RecentFiles {
-			updatedAt := rf.UpdatedAt
-			if updatedAt.IsZero() {
-				updatedAt = time.Now()
+			updatedAtStr := strings.TrimSpace(rf.UpdatedAt)
+			if updatedAtStr == "" {
+				updatedAtStr = time.Now().UTC().Format(time.RFC3339)
 			}
 			_, err := tx.Exec(
 				`INSERT OR REPLACE INTO recent_files (path, title, updated_at) VALUES (?, ?, ?);`,
-				rf.Path, rf.Title, updatedAt.UTC().Format(time.RFC3339),
+				rf.Path, rf.Title, updatedAtStr,
 			)
 			if err != nil {
 				tx.Rollback()

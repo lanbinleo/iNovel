@@ -1,7 +1,7 @@
 import './style.css';
 
 // 导入Wails运行时
-import { OpenFile, SaveFile, LoadFileContent, GetConfig, SetTheme, SetEditorWidth, CreateFile as WailsCreateFile, CreateFolder as WailsCreateFolder, DeleteFile as WailsDeleteFile, RenameFile as WailsRenameFile, MoveFile as WailsMoveFile, WindowMinimize, WindowMaximize, WindowClose, SaveWorkspace, OpenWorkspace, AddFolderToWorkspace, GetMultiFolderFileTree, ExportAsTxt, ExportAsImagePathWithName, SaveImageData, LoadWorkspaceFile, GetVersion, CheckUpdate, OpenURL } from '../wailsjs/go/main/App';
+import { OpenFile, SaveFile, LoadFileContent, GetConfig, SetTheme, SetEditorWidth, CreateFile as WailsCreateFile, CreateFolder as WailsCreateFolder, DeleteFile as WailsDeleteFile, RenameFile as WailsRenameFile, MoveFile as WailsMoveFile, WindowMinimize, WindowMaximize, WindowClose, SaveWorkspace, OpenWorkspace, AddFolderToWorkspace, GetMultiFolderFileTree, ExportAsTxt, ExportAsImagePathWithName, SaveImageData, LoadWorkspaceFile, GetVersion, CheckUpdate, OpenURL, ListNovels, CreateNovel, ListChapters, CreateChapter, GetChapterContent, SaveChapterContent } from '../wailsjs/go/main/App';
 
 // 导入编辑器
 import { Editor, createEditor } from './editor/Editor';
@@ -19,6 +19,26 @@ interface FileInfo {
     content: string;
 }
 
+interface NovelSummary {
+    id: string;
+    title: string;
+    summary: string;
+    updated_at: string;
+}
+
+interface ChapterSummary {
+    id: string;
+    title: string;
+    outline: string;
+    order_key: number;
+}
+
+interface ChapterContent {
+    id: string;
+    title: string;
+    content: string;
+}
+
 // ============ 全局状态 ============
 let currentFile: FileInfo | null = null;
 let isDirty = false;
@@ -28,6 +48,10 @@ let editorWidthMode: 'narrow' | 'medium' | 'wide' = 'medium';
 let currentTheme: 'light' | 'dark' = 'light';
 let currentFontSize: 'small' | 'medium' | 'large' = 'medium';
 let currentWorkspace: { name: string; folders: string[] } = { name: '未命名工作空间', folders: [] };
+let currentNovelId: string | null = null;
+let currentChapterId: string | null = null;
+let novels: NovelSummary[] = [];
+let chapters: ChapterSummary[] = [];
 let editor: Editor;
 let fileTree: FileTree;
 
@@ -57,6 +81,14 @@ const exportPopup = document.getElementById('export-popup') as HTMLDivElement;
 const versionText = document.getElementById('version-text') as HTMLSpanElement;
 const versionLink = document.getElementById('version-link') as HTMLAnchorElement;
 const updateBadge = document.getElementById('update-badge') as HTMLSpanElement;
+const settingsBtn = document.getElementById('settings-btn') as HTMLButtonElement;
+const settingsPage = document.getElementById('settings-page') as HTMLDivElement;
+const settingsCloseBtn = document.getElementById('settings-close-btn') as HTMLButtonElement;
+const novelList = document.getElementById('novel-list') as HTMLDivElement;
+const chapterList = document.getElementById('chapter-list') as HTMLDivElement;
+const newNovelBtn = document.getElementById('new-novel-btn') as HTMLButtonElement;
+const newChapterBtn = document.getElementById('new-chapter-btn') as HTMLButtonElement;
+const chapterTitleInput = document.getElementById('chapter-title-input') as HTMLInputElement;
 
 // ============ 编辑器辅助功能 ============
 
@@ -79,7 +111,10 @@ function updateSaveStatus(saved: boolean) {
 }
 
 function updateFileTitle() {
-    if (currentFile && currentFile.path) {
+    if (currentChapterId) {
+        const title = chapterTitleInput.value.trim();
+        fileTitle.textContent = title || '未命名章节';
+    } else if (currentFile && currentFile.path) {
         const fileName = currentFile.path.split(/[/\\]/).pop() || '未命名文档';
         fileTitle.textContent = fileName;
     } else {
@@ -87,6 +122,179 @@ function updateFileTitle() {
         const firstLine = content.split('\n')[0].trim();
         fileTitle.textContent = firstLine.substring(0, 20) || '未命名文档';
     }
+}
+
+// ============ 小说与章节 ============
+
+function setChapterHeaderEnabled(enabled: boolean, placeholder: string) {
+    chapterTitleInput.disabled = !enabled;
+    chapterTitleInput.placeholder = placeholder;
+    if (!enabled) {
+        chapterTitleInput.value = '';
+    }
+}
+
+function renderNovelList() {
+    if (!novelList) return;
+    if (novels.length === 0) {
+        novelList.innerHTML = '<div class="sidebar-list-empty">暂无小说</div>';
+        return;
+    }
+
+    novelList.innerHTML = '';
+    for (const novel of novels) {
+        const item = document.createElement('div');
+        item.className = 'sidebar-list-item';
+        if (currentNovelId === novel.id) item.classList.add('selected');
+
+        const title = document.createElement('div');
+        title.className = 'sidebar-list-title';
+        title.textContent = novel.title;
+
+        const summary = document.createElement('div');
+        summary.className = 'sidebar-list-sub';
+        summary.textContent = novel.summary || '暂无简介';
+
+        item.appendChild(title);
+        item.appendChild(summary);
+        item.addEventListener('click', () => selectNovel(novel.id));
+
+        novelList.appendChild(item);
+    }
+}
+
+function renderChapterList() {
+    if (!chapterList) return;
+    if (!currentNovelId) {
+        chapterList.innerHTML = '<div class="sidebar-list-empty">请选择小说</div>';
+        return;
+    }
+    if (chapters.length === 0) {
+        chapterList.innerHTML = '<div class="sidebar-list-empty">暂无章节</div>';
+        return;
+    }
+
+    chapterList.innerHTML = '';
+    for (const chapter of chapters) {
+        const item = document.createElement('div');
+        item.className = 'sidebar-list-item';
+        if (currentChapterId === chapter.id) item.classList.add('selected');
+
+        const title = document.createElement('div');
+        title.className = 'sidebar-list-title';
+        title.textContent = chapter.title;
+
+        const outline = document.createElement('div');
+        outline.className = 'sidebar-list-sub';
+        outline.textContent = chapter.outline || '暂无梗概';
+
+        item.appendChild(title);
+        item.appendChild(outline);
+        item.addEventListener('click', () => selectChapter(chapter.id));
+
+        chapterList.appendChild(item);
+    }
+}
+
+async function loadNovels() {
+    try {
+        const list = await ListNovels();
+        novels = (list || []) as NovelSummary[];
+        renderNovelList();
+    } catch (error) {
+        console.error('加载小说列表失败:', error);
+    }
+}
+
+async function loadChapters(novelId: string) {
+    try {
+        const list = await ListChapters(novelId);
+        chapters = (list || []) as ChapterSummary[];
+        renderChapterList();
+    } catch (error) {
+        console.error('加载章节列表失败:', error);
+    }
+}
+
+async function selectNovel(novelId: string) {
+    currentNovelId = novelId;
+    currentChapterId = null;
+    await loadChapters(novelId);
+
+    if (chapters.length > 0) {
+        await selectChapter(chapters[0].id);
+    } else {
+        editor.clear();
+        updateWordCount();
+        updateSaveStatus(true);
+        setChapterHeaderEnabled(false, '暂无章节');
+    }
+
+    renderNovelList();
+}
+
+async function selectChapter(chapterId: string) {
+    try {
+        const content = await GetChapterContent(chapterId);
+        if (!content) return;
+
+        currentChapterId = chapterId;
+        currentFile = null;
+
+        const chapter = content as ChapterContent;
+        setChapterHeaderEnabled(true, '章节标题');
+        chapterTitleInput.value = chapter.title || '未命名章节';
+        editor.setContent(chapter.content || '');
+        updateWordCount();
+        updateSaveStatus(true);
+        updateFileTitle();
+        renderChapterList();
+    } catch (error) {
+        console.error('加载章节失败:', error);
+    }
+}
+
+async function handleCreateNovel() {
+    const title = await showInputModal('新建小说', '输入小说标题');
+    if (title === null) return;
+
+    try {
+        const novel = await CreateNovel(title);
+        await loadNovels();
+        if (novel && (novel as NovelSummary).id) {
+            await selectNovel((novel as NovelSummary).id);
+        }
+    } catch (error) {
+        console.error('创建小说失败:', error);
+        alert('创建小说失败: ' + error);
+    }
+}
+
+async function handleCreateChapter() {
+    if (!currentNovelId) {
+        await showConfirmModal('提示', '请先选择小说');
+        return;
+    }
+    const title = await showInputModal('新建章节', '输入章节标题', '第1章');
+    if (title === null) return;
+
+    try {
+        const chapter = await CreateChapter(currentNovelId, title);
+        await loadChapters(currentNovelId);
+        if (chapter && (chapter as ChapterSummary).id) {
+            await selectChapter((chapter as ChapterSummary).id);
+        }
+    } catch (error) {
+        console.error('创建章节失败:', error);
+        alert('创建章节失败: ' + error);
+    }
+}
+
+function exitChapterMode() {
+    currentChapterId = null;
+    setChapterHeaderEnabled(false, '请选择章节');
+    renderChapterList();
+    updateFileTitle();
 }
 
 // ============ 文件操作 ============
@@ -97,6 +305,7 @@ async function handleNewFile() {
         if (!confirmed) return;
     }
 
+    exitChapterMode();
     editor.clear();
     currentFile = null;
     updateFileTitle();
@@ -109,6 +318,17 @@ async function handleSave() {
     const content = editor.getContent();
 
     try {
+        if (currentChapterId) {
+            const title = chapterTitleInput.value.trim() || '未命名章节';
+            await SaveChapterContent(currentChapterId, title, content);
+            if (currentNovelId) {
+                await loadChapters(currentNovelId);
+            }
+            updateFileTitle();
+            updateSaveStatus(true);
+            return;
+        }
+
         const path = currentFile?.path || '';
         const savedPath = await SaveFile(path, content);
 
@@ -136,6 +356,7 @@ async function handleOpen() {
     }
 
     try {
+        exitChapterMode();
         const fileInfo = await OpenFile();
         if (fileInfo) {
             currentFile = fileInfo;
@@ -243,6 +464,12 @@ document.addEventListener('click', (e) => {
     }
 });
 
+settingsPage?.addEventListener('click', (e) => {
+    if (e.target === settingsPage) {
+        closeSettings();
+    }
+});
+
 // ============ 导出功能 ============
 
 function toggleExportPopup() {
@@ -250,6 +477,16 @@ function toggleExportPopup() {
     exportPopup.style.top = `${rect.bottom + 4}px`;
     exportPopup.style.right = `${window.innerWidth - rect.right}px`;
     exportPopup.classList.toggle('hidden');
+}
+
+// ============ 设置页面 ============
+
+function openSettings() {
+    settingsPage.classList.remove('hidden');
+}
+
+function closeSettings() {
+    settingsPage.classList.add('hidden');
 }
 
 async function handleExportTxt() {
@@ -460,6 +697,7 @@ async function handleFileSelect(path: string) {
     }
 
     try {
+        exitChapterMode();
         const loadedFile = await LoadFileContent(path);
         if (loadedFile) {
             currentFile = loadedFile;
@@ -560,6 +798,16 @@ if (addFolderBtn) addFolderBtn.addEventListener('click', handleAddFolder);
 if (newFolderBtn) newFolderBtn.addEventListener('click', handleNewFolderInWorkspace);
 if (refreshTreeBtn) refreshTreeBtn.addEventListener('click', refreshFileTree);
 if (exportBtn) exportBtn.addEventListener('click', toggleExportPopup);
+if (settingsBtn) settingsBtn.addEventListener('click', openSettings);
+if (settingsCloseBtn) settingsCloseBtn.addEventListener('click', closeSettings);
+if (newNovelBtn) newNovelBtn.addEventListener('click', handleCreateNovel);
+if (newChapterBtn) newChapterBtn.addEventListener('click', handleCreateChapter);
+if (chapterTitleInput) {
+    chapterTitleInput.addEventListener('input', () => {
+        updateFileTitle();
+        updateSaveStatus(false);
+    });
+}
 
 // 导出选项
 exportPopup?.querySelectorAll('.popup-item').forEach(item => {
@@ -611,6 +859,12 @@ async function init() {
         onMoveFile: handleMoveFile,
         onRefresh: refreshFileTree
     });
+
+    setChapterHeaderEnabled(false, '请选择章节');
+    await loadNovels();
+    if (novels.length > 0) {
+        await selectNovel(novels[0].id);
+    }
 
     try {
         const config = await GetConfig();

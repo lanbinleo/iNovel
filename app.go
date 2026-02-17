@@ -33,9 +33,9 @@ type FileInfo struct {
 
 // RecentFile 最近文件记录
 type RecentFile struct {
-	Path      string    `json:"path"`
-	Title     string    `json:"title"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Path      string `json:"path"`
+	Title     string `json:"title"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 // Config 配置文件
@@ -118,11 +118,10 @@ func (a *App) loadConfig() (*Config, error) {
 		if err := rows.Scan(&path, &title, &updatedAtStr); err != nil {
 			continue
 		}
-		updatedAt, _ := time.Parse(time.RFC3339, updatedAtStr)
 		config.RecentFiles = append(config.RecentFiles, RecentFile{
 			Path:      path,
 			Title:     title,
-			UpdatedAt: updatedAt,
+			UpdatedAt: updatedAtStr,
 		})
 	}
 

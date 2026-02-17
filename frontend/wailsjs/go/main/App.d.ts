@@ -6,9 +6,13 @@ export function AddFolderToWorkspace():Promise<string>;
 
 export function CheckUpdate():Promise<main.UpdateInfo>;
 
+export function CreateChapter(arg1:string,arg2:string):Promise<main.ChapterSummary>;
+
 export function CreateFile(arg1:string,arg2:string):Promise<string>;
 
 export function CreateFolder(arg1:string,arg2:string):Promise<string>;
+
+export function CreateNovel(arg1:string):Promise<main.NovelSummary>;
 
 export function DeleteAIProvider(arg1:string):Promise<void>;
 
@@ -19,6 +23,8 @@ export function ExportAsImagePath():Promise<string>;
 export function ExportAsImagePathWithName(arg1:string):Promise<string>;
 
 export function ExportAsTxt(arg1:string):Promise<string>;
+
+export function GetChapterContent(arg1:string):Promise<main.ChapterContent>;
 
 export function GetConfig():Promise<main.Config>;
 
@@ -38,6 +44,10 @@ export function ImportNovelFromPath(arg1:string):Promise<main.Novel>;
 
 export function ListAIProviders():Promise<Array<main.AIProvider>>;
 
+export function ListChapters(arg1:string):Promise<Array<main.ChapterSummary>>;
+
+export function ListNovels():Promise<Array<main.NovelSummary>>;
+
 export function LoadFileContent(arg1:string):Promise<main.FileInfo>;
 
 export function LoadWorkspaceFile(arg1:string):Promise<main.Workspace>;
@@ -53,6 +63,8 @@ export function OpenURL(arg1:string):Promise<void>;
 export function OpenWorkspace():Promise<main.Workspace>;
 
 export function RenameFile(arg1:string,arg2:string):Promise<string>;
+
+export function SaveChapterContent(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function SaveFile(arg1:string,arg2:string):Promise<string>;
 
