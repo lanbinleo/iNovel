@@ -18,6 +18,10 @@ export function CreateFolder(arg1, arg2) {
   return window['go']['main']['App']['CreateFolder'](arg1, arg2);
 }
 
+export function DeleteAIProvider(arg1) {
+  return window['go']['main']['App']['DeleteAIProvider'](arg1);
+}
+
 export function DeleteFile(arg1) {
   return window['go']['main']['App']['DeleteFile'](arg1);
 }
@@ -38,6 +42,10 @@ export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
 
+export function GetDefaultAIProvider() {
+  return window['go']['main']['App']['GetDefaultAIProvider']();
+}
+
 export function GetFileTree(arg1) {
   return window['go']['main']['App']['GetFileTree'](arg1);
 }
@@ -52,6 +60,18 @@ export function GetRecentFiles() {
 
 export function GetVersion() {
   return window['go']['main']['App']['GetVersion']();
+}
+
+export function ImportNovelFromDialog() {
+  return window['go']['main']['App']['ImportNovelFromDialog']();
+}
+
+export function ImportNovelFromPath(arg1) {
+  return window['go']['main']['App']['ImportNovelFromPath'](arg1);
+}
+
+export function ListAIProviders() {
+  return window['go']['main']['App']['ListAIProviders']();
 }
 
 export function LoadFileContent(arg1) {
@@ -102,6 +122,10 @@ export function SelectWorkspace() {
   return window['go']['main']['App']['SelectWorkspace']();
 }
 
+export function SetDefaultAIProvider(arg1) {
+  return window['go']['main']['App']['SetDefaultAIProvider'](arg1);
+}
+
 export function SetEditorWidth(arg1) {
   return window['go']['main']['App']['SetEditorWidth'](arg1);
 }
@@ -112,6 +136,10 @@ export function SetLastWorkspace(arg1) {
 
 export function SetTheme(arg1) {
   return window['go']['main']['App']['SetTheme'](arg1);
+}
+
+export function UpsertAIProvider(arg1) {
+  return window['go']['main']['App']['UpsertAIProvider'](arg1);
 }
 
 export function WindowClose() {

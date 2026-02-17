@@ -10,6 +10,8 @@ export function CreateFile(arg1:string,arg2:string):Promise<string>;
 
 export function CreateFolder(arg1:string,arg2:string):Promise<string>;
 
+export function DeleteAIProvider(arg1:string):Promise<void>;
+
 export function DeleteFile(arg1:string):Promise<void>;
 
 export function ExportAsImagePath():Promise<string>;
@@ -20,6 +22,8 @@ export function ExportAsTxt(arg1:string):Promise<string>;
 
 export function GetConfig():Promise<main.Config>;
 
+export function GetDefaultAIProvider():Promise<main.AIProvider>;
+
 export function GetFileTree(arg1:string):Promise<main.FileTreeNode>;
 
 export function GetMultiFolderFileTree(arg1:Array<string>):Promise<Array<main.FileTreeNode>>;
@@ -27,6 +31,12 @@ export function GetMultiFolderFileTree(arg1:Array<string>):Promise<Array<main.Fi
 export function GetRecentFiles():Promise<Array<main.FileInfo>>;
 
 export function GetVersion():Promise<string>;
+
+export function ImportNovelFromDialog():Promise<main.Novel>;
+
+export function ImportNovelFromPath(arg1:string):Promise<main.Novel>;
+
+export function ListAIProviders():Promise<Array<main.AIProvider>>;
 
 export function LoadFileContent(arg1:string):Promise<main.FileInfo>;
 
@@ -52,11 +62,15 @@ export function SaveWorkspace(arg1:main.Workspace):Promise<string>;
 
 export function SelectWorkspace():Promise<string>;
 
+export function SetDefaultAIProvider(arg1:string):Promise<void>;
+
 export function SetEditorWidth(arg1:string):Promise<void>;
 
 export function SetLastWorkspace(arg1:string):Promise<void>;
 
 export function SetTheme(arg1:string):Promise<void>;
+
+export function UpsertAIProvider(arg1:main.AIProvider):Promise<main.AIProvider>;
 
 export function WindowClose():Promise<void>;
 

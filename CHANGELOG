@@ -1,3 +1,19 @@
+## 0.2.0-alpha.1
+
+Phase 1
+- 新增 SQLite 单库模式（~/.inovel/library.db），包含 novels/volumes/chapters/paragraphs/app_config/recent_files/ai_providers
+- 配置与最近文件迁移到数据库（保留旧 config.json 迁移入口）
+- 新增 Markdown/TXT 导入为单章小说的后端能力
+
+Phase 2
+- （计划）章节/段落驱动编辑器与小说导航
+
+Phase 3
+- （计划）元数据 JSON 与大纲页
+
+Phase 4
+- （计划）AI 引用输入与 OpenAI/Anthropic 兼容接入、replace() 应用
+
 ## 0.1.0-alpha.1
 
 - 移动了代码从 novel-writer 到 iNovel 项目

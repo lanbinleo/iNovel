@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -20,6 +21,7 @@ var Version = "0.1.0"
 // App struct
 type App struct {
 	ctx context.Context
+	db  *sql.DB
 }
 
 // FileInfo 文件信息
@@ -53,6 +55,9 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	if err := a.initDatabase(); err != nil {
+		runtime.LogError(a.ctx, "db init failed: "+err.Error())
+	}
 }
 
 // beforeClose is called when the window is about to close
@@ -64,37 +69,61 @@ func (a *App) beforeClose(ctx context.Context) bool {
 
 // getConfigPath 获取配置文件路径
 func (a *App) getConfigPath() (string, error) {
-	homeDir, err := os.UserHomeDir()
+	dataDir, err := getDataDir()
 	if err != nil {
 		return "", err
 	}
-
-	configDir := filepath.Join(homeDir, ".inovel")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return "", err
-	}
-
-	return filepath.Join(configDir, "config.json"), nil
+	return filepath.Join(dataDir, "config.json"), nil
 }
 
 // loadConfig 加载配置
 func (a *App) loadConfig() (*Config, error) {
-	configPath, err := a.getConfigPath()
+	db, err := a.ensureDB()
 	if err != nil {
 		return &Config{RecentFiles: []RecentFile{}}, nil
 	}
 
-	data, err := os.ReadFile(configPath)
+	config := Config{RecentFiles: []RecentFile{}}
+
+	var theme sql.NullString
+	var editorWidth sql.NullString
+	var lastWorkspace sql.NullString
+
+	err = db.QueryRow(`SELECT theme, editor_width, last_workspace FROM app_config WHERE id = 1;`).Scan(&theme, &editorWidth, &lastWorkspace)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if err == sql.ErrNoRows {
+			_, _ = db.Exec(`INSERT OR IGNORE INTO app_config (id, theme, editor_width, last_workspace) VALUES (1, 'light', 'medium', '');`)
+			config.Theme = "light"
+			config.EditorWidth = "medium"
+			config.LastWorkspace = ""
+		} else {
 			return &Config{RecentFiles: []RecentFile{}}, nil
 		}
-		return nil, err
+	} else {
+		config.Theme = theme.String
+		config.EditorWidth = editorWidth.String
+		config.LastWorkspace = lastWorkspace.String
 	}
 
-	var config Config
-	if err := json.Unmarshal(data, &config); err != nil {
-		return &Config{RecentFiles: []RecentFile{}}, nil
+	rows, err := db.Query(`SELECT path, title, updated_at FROM recent_files ORDER BY updated_at DESC LIMIT 10;`)
+	if err != nil {
+		return &config, nil
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var path string
+		var title string
+		var updatedAtStr string
+		if err := rows.Scan(&path, &title, &updatedAtStr); err != nil {
+			continue
+		}
+		updatedAt, _ := time.Parse(time.RFC3339, updatedAtStr)
+		config.RecentFiles = append(config.RecentFiles, RecentFile{
+			Path:      path,
+			Title:     title,
+			UpdatedAt: updatedAt,
+		})
 	}
 
 	return &config, nil
@@ -102,50 +131,61 @@ func (a *App) loadConfig() (*Config, error) {
 
 // saveConfig 保存配置
 func (a *App) saveConfig(config *Config) error {
-	configPath, err := a.getConfigPath()
+	db, err := a.ensureDB()
 	if err != nil {
 		return err
 	}
-
-	data, err := json.Marshal(config)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(configPath, data, 0644)
+	_, err = db.Exec(
+		`INSERT INTO app_config (id, theme, editor_width, last_workspace)
+		 VALUES (1, ?, ?, ?)
+		 ON CONFLICT(id) DO UPDATE SET
+		 theme = excluded.theme,
+		 editor_width = excluded.editor_width,
+		 last_workspace = excluded.last_workspace;`,
+		config.Theme, config.EditorWidth, config.LastWorkspace,
+	)
+	return err
 }
 
 // addToRecentFiles 添加到最近文件列表
 func (a *App) addToRecentFiles(path string, title string) error {
-	config, err := a.loadConfig()
+	db, err := a.ensureDB()
 	if err != nil {
 		return err
 	}
 
-	// 移除重复项
-	var newRecentFiles []RecentFile
-	for _, rf := range config.RecentFiles {
-		if rf.Path != path {
-			newRecentFiles = append(newRecentFiles, rf)
-		}
+	tx, err := db.Begin()
+	if err != nil {
+		return err
 	}
 
-	// 添加到开头
-	newRecentFiles = append([]RecentFile{
-		{
-			Path:      path,
-			Title:     title,
-			UpdatedAt: time.Now(),
-		},
-	}, newRecentFiles...)
-
-	// 只保留最近10个
-	if len(newRecentFiles) > 10 {
-		newRecentFiles = newRecentFiles[:10]
+	_, err = tx.Exec(`DELETE FROM recent_files WHERE path = ?;`, path)
+	if err != nil {
+		tx.Rollback()
+		return err
 	}
 
-	config.RecentFiles = newRecentFiles
-	return a.saveConfig(config)
+	_, err = tx.Exec(
+		`INSERT INTO recent_files (path, title, updated_at) VALUES (?, ?, ?);`,
+		path, title, time.Now().UTC().Format(time.RFC3339),
+	)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	_, err = tx.Exec(`
+		DELETE FROM recent_files
+		WHERE path NOT IN (
+			SELECT path FROM recent_files ORDER BY updated_at DESC LIMIT 10
+		);
+	`)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }
 
 // NewFile 创建新文件
@@ -275,22 +315,32 @@ func (a *App) SaveFile(path string, content string) (string, error) {
 
 // GetRecentFiles 获取最近文件列表
 func (a *App) GetRecentFiles() ([]FileInfo, error) {
-	config, err := a.loadConfig()
+	db, err := a.ensureDB()
 	if err != nil {
 		return []FileInfo{}, nil
 	}
 
+	rows, err := db.Query(`SELECT path, title, updated_at FROM recent_files ORDER BY updated_at DESC LIMIT 10;`)
+	if err != nil {
+		return []FileInfo{}, nil
+	}
+	defer rows.Close()
+
 	var files []FileInfo
-	for _, rf := range config.RecentFiles {
-		// 检查文件是否存在
-		if _, err := os.Stat(rf.Path); os.IsNotExist(err) {
+	for rows.Next() {
+		var path string
+		var title string
+		var updatedAtStr string
+		if err := rows.Scan(&path, &title, &updatedAtStr); err != nil {
 			continue
 		}
-
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			continue
+		}
 		files = append(files, FileInfo{
-			Path:    rf.Path,
-			Title:   rf.Title,
-			Content: "", // 不加载内容，只在用户点击时加载
+			Path:    path,
+			Title:   title,
+			Content: "",
 		})
 	}
 

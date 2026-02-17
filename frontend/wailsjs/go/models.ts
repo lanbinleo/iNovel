@@ -1,5 +1,29 @@
 export namespace main {
 	
+	export class AIProvider {
+	    id: string;
+	    name: string;
+	    provider: string;
+	    base_url: string;
+	    api_key: string;
+	    model: string;
+	    is_default: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new AIProvider(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.provider = source["provider"];
+	        this.base_url = source["base_url"];
+	        this.api_key = source["api_key"];
+	        this.model = source["model"];
+	        this.is_default = source["is_default"];
+	    }
+	}
 	export class RecentFile {
 	    path: string;
 	    title: string;
@@ -103,6 +127,48 @@ export namespace main {
 	        this.path = source["path"];
 	        this.is_dir = source["is_dir"];
 	        this.children = this.convertValues(source["children"], FileTreeNode);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class Novel {
+	    id: string;
+	    title: string;
+	    summary: string;
+	    meta_json: string;
+	    // Go type: time
+	    created_at: any;
+	    // Go type: time
+	    updated_at: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new Novel(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.title = source["title"];
+	        this.summary = source["summary"];
+	        this.meta_json = source["meta_json"];
+	        this.created_at = this.convertValues(source["created_at"], null);
+	        this.updated_at = this.convertValues(source["updated_at"], null);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
