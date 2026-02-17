@@ -1,7 +1,7 @@
 import './style.css';
 
 // 导入Wails运行时
-import { GetConfig, SetTheme, SetEditorWidth, WindowMinimize, WindowMaximize, WindowClose, ExportAsTxt, ExportAsImagePathWithName, SaveImageData, GetVersion, CheckUpdate, OpenURL, ListNovels, CreateNovel, UpdateNovel, DeleteNovel, ListChapters, CreateChapter, DeleteChapter, GetChapterContent, SaveChapterContent, ImportNovelFromDialog } from '../wailsjs/go/main/App';
+import { GetConfig, SetTheme, SetEditorWidth, WindowMinimize, WindowMaximize, WindowClose, ExportAsTxt, ExportAsImagePathWithName, SaveImageData, GetVersion, CheckUpdate, OpenURL, ListNovels, CreateNovel, UpdateNovel, DeleteNovel, ListChapters, CreateChapter, DeleteChapter, MoveChapter, GetChapterContent, SaveChapterContent, ImportNovelFromDialog } from '../wailsjs/go/main/App';
 
 // 导入编辑器
 import { Editor, createEditor } from './editor/Editor';
@@ -59,10 +59,12 @@ const wordCount = document.getElementById('word-count') as HTMLSpanElement;
 const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
 const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn') as HTMLButtonElement;
 const widthModeBtn = document.getElementById('width-mode-btn') as HTMLButtonElement;
+const toggleInspectorBtn = document.getElementById('toggle-inspector-btn') as HTMLButtonElement;
 const themeToggleBtn = document.getElementById('theme-toggle-btn') as HTMLButtonElement;
 const fontSizeBtn = document.getElementById('font-size-btn') as HTMLButtonElement;
 const fontSizePopup = document.getElementById('font-size-popup') as HTMLDivElement;
 const sidebar = document.getElementById('sidebar') as HTMLDivElement;
+const inspector = document.querySelector('.inspector') as HTMLDivElement;
 const exportBtn = document.getElementById('export-btn') as HTMLButtonElement;
 const exportPopup = document.getElementById('export-popup') as HTMLDivElement;
 const versionText = document.getElementById('version-text') as HTMLSpanElement;
@@ -86,6 +88,8 @@ const novelSummaryInput = document.getElementById('novel-summary-input') as HTML
 const novelSaveBtn = document.getElementById('novel-save-btn') as HTMLButtonElement;
 const novelDeleteBtn = document.getElementById('novel-delete-btn') as HTMLButtonElement;
 const chapterDeleteBtn = document.getElementById('chapter-delete-btn') as HTMLButtonElement;
+const chapterMoveUpBtn = document.getElementById('chapter-move-up-btn') as HTMLButtonElement;
+const chapterMoveDownBtn = document.getElementById('chapter-move-down-btn') as HTMLButtonElement;
 
 // ============ 编辑器辅助功能 ============
 
@@ -139,6 +143,12 @@ function setChapterHeaderEnabled(enabled: boolean, placeholder: string) {
     }
     if (chapterDeleteBtn) {
         chapterDeleteBtn.disabled = !enabled;
+    }
+    if (chapterMoveUpBtn) {
+        chapterMoveUpBtn.disabled = !enabled;
+    }
+    if (chapterMoveDownBtn) {
+        chapterMoveDownBtn.disabled = !enabled;
     }
 }
 
@@ -228,6 +238,8 @@ function renderChapterList() {
 
         chapterList.appendChild(item);
     }
+
+    updateChapterMoveState();
 }
 
 async function confirmDiscardIfDirty(): Promise<boolean> {
@@ -330,6 +342,17 @@ async function selectChapter(chapterId: string) {
     } catch (error) {
         console.error('加载章节失败:', error);
     }
+}
+
+function updateChapterMoveState() {
+    if (!currentChapterId || chapters.length === 0) {
+        if (chapterMoveUpBtn) chapterMoveUpBtn.disabled = true;
+        if (chapterMoveDownBtn) chapterMoveDownBtn.disabled = true;
+        return;
+    }
+    const index = chapters.findIndex(c => c.id === currentChapterId);
+    if (chapterMoveUpBtn) chapterMoveUpBtn.disabled = index <= 0;
+    if (chapterMoveDownBtn) chapterMoveDownBtn.disabled = index < 0 || index >= chapters.length - 1;
 }
 
 async function handleCreateNovel() {
@@ -460,6 +483,26 @@ async function handleDeleteChapter() {
     }
 }
 
+async function handleMoveChapter(direction: 'up' | 'down') {
+    if (!currentChapterId) {
+        await showConfirmModal('提示', '请先选择章节');
+        return;
+    }
+    try {
+        const moved = await MoveChapter(currentChapterId, direction);
+        if (!moved) {
+            updateChapterMoveState();
+            return;
+        }
+        if (currentNovelId) {
+            await loadChapters(currentNovelId);
+        }
+    } catch (error) {
+        console.error('移动章节失败:', error);
+        alert('移动章节失败: ' + error);
+    }
+}
+
 async function handleImportNovel() {
     const ok = await confirmDiscardIfDirty();
     if (!ok) return;
@@ -510,6 +553,11 @@ function startAutoSave() {
 
 function toggleSidebar() {
     sidebar.classList.toggle('hidden');
+}
+
+function toggleInspector() {
+    if (!inspector) return;
+    inspector.classList.toggle('hidden');
 }
 
 async function toggleWidthMode() {
@@ -766,6 +814,9 @@ if (newChapterBtn) newChapterBtn.addEventListener('click', handleCreateChapter);
 if (novelSaveBtn) novelSaveBtn.addEventListener('click', handleSaveNovel);
 if (novelDeleteBtn) novelDeleteBtn.addEventListener('click', handleDeleteNovel);
 if (chapterDeleteBtn) chapterDeleteBtn.addEventListener('click', handleDeleteChapter);
+if (chapterMoveUpBtn) chapterMoveUpBtn.addEventListener('click', () => handleMoveChapter('up'));
+if (chapterMoveDownBtn) chapterMoveDownBtn.addEventListener('click', () => handleMoveChapter('down'));
+if (toggleInspectorBtn) toggleInspectorBtn.addEventListener('click', toggleInspector);
 if (chapterTitleInput) {
     chapterTitleInput.addEventListener('input', () => {
         updateFileTitle();

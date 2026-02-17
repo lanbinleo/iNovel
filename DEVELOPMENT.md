@@ -11,9 +11,10 @@
 - Chapter editor with title + outline + content.
 - Legacy workspace/file-tree UI removed.
 - Novel info editing (title/summary) and delete actions for novel/chapter.
+- Chapter move up/down and inspector collapse.
 
 ## Next Steps (Phase 2)
-1. Chapter reorder and batch actions.
+1. Chapter batch actions.
 2. Outline page (per chapter summary list).
 3. Import entry placement and progress feedback.
 

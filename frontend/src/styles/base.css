@@ -387,6 +387,15 @@ body {
   gap: 12px;
   padding: 14px 12px 16px;
   overflow-y: auto;
+  transition: width 0.25s ease, padding 0.25s ease, border-color 0.25s ease, opacity 0.25s ease;
+}
+
+.inspector.hidden {
+  width: 0;
+  padding: 0;
+  border-left: 0;
+  opacity: 0;
+  overflow: hidden;
 }
 
 .inspector-section {
@@ -490,6 +499,7 @@ body {
   display: flex;
   gap: 8px;
   margin-top: 12px;
+  flex-wrap: wrap;
 }
 
 .inspector-btn {
@@ -510,8 +520,8 @@ body {
 }
 
 .inspector-btn.danger {
-  background-color: #d64545;
-  color: #fff;
+  background-color: var(--danger);
+  color: var(--danger-foreground);
 }
 
 .inspector-btn:disabled {

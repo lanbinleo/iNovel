@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"strings"
 	"time"
 
@@ -238,6 +239,74 @@ func (a *App) DeleteChapter(chapterID string) error {
 	_, _ = tx.Exec(`UPDATE novels SET updated_at = ? WHERE id = ?;`, nowStr, novelID)
 
 	return tx.Commit()
+}
+
+func (a *App) MoveChapter(chapterID string, direction string) (bool, error) {
+	db, err := a.ensureDB()
+	if err != nil {
+		return false, err
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return false, err
+	}
+
+	var novelID string
+	var orderKey int
+	if err := tx.QueryRow(`SELECT novel_id, order_key FROM chapters WHERE id = ?;`, chapterID).Scan(&novelID, &orderKey); err != nil {
+		tx.Rollback()
+		return false, err
+	}
+
+	var targetID string
+	var targetOrder int
+	switch direction {
+	case "up":
+		err = tx.QueryRow(`
+			SELECT id, order_key
+			FROM chapters
+			WHERE novel_id = ? AND order_key < ?
+			ORDER BY order_key DESC
+			LIMIT 1;
+		`, novelID, orderKey).Scan(&targetID, &targetOrder)
+	case "down":
+		err = tx.QueryRow(`
+			SELECT id, order_key
+			FROM chapters
+			WHERE novel_id = ? AND order_key > ?
+			ORDER BY order_key ASC
+			LIMIT 1;
+		`, novelID, orderKey).Scan(&targetID, &targetOrder)
+	default:
+		tx.Rollback()
+		return false, nil
+	}
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			tx.Rollback()
+			return false, nil
+		}
+		tx.Rollback()
+		return false, err
+	}
+
+	nowStr := time.Now().UTC().Format(time.RFC3339)
+	if _, err := tx.Exec(`UPDATE chapters SET order_key = ?, updated_at = ? WHERE id = ?;`, targetOrder, nowStr, chapterID); err != nil {
+		tx.Rollback()
+		return false, err
+	}
+	if _, err := tx.Exec(`UPDATE chapters SET order_key = ?, updated_at = ? WHERE id = ?;`, orderKey, nowStr, targetID); err != nil {
+		tx.Rollback()
+		return false, err
+	}
+	_, _ = tx.Exec(`UPDATE novels SET updated_at = ? WHERE id = ?;`, nowStr, novelID)
+
+	if err := tx.Commit(); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (a *App) GetChapterContent(chapterID string) (*ChapterContent, error) {

@@ -56,6 +56,8 @@ export function LoadFileContent(arg1:string):Promise<main.FileInfo>;
 
 export function LoadWorkspaceFile(arg1:string):Promise<main.Workspace>;
 
+export function MoveChapter(arg1:string,arg2:string):Promise<boolean>;
+
 export function MoveFile(arg1:string,arg2:string):Promise<string>;
 
 export function NewFile():Promise<main.FileInfo>;

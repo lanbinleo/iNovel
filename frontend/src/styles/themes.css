@@ -27,6 +27,8 @@
   /* 状态色 */
   --success: #7a9a7a;
   --warning: #c4a35a;
+  --danger: #b07a76;
+  --danger-foreground: #fffaf7;
 
   /* 工具栏 */
   --toolbar-bg: rgba(250, 248, 245, 0.85);
@@ -90,6 +92,8 @@
   /* 状态色 */
   --success: #8aaa8a;
   --warning: #d4b36a;
+  --danger: #8a5f5c;
+  --danger-foreground: #f2ebe2;
 
   /* 工具栏 */
   --toolbar-bg: rgba(28, 27, 25, 0.9);

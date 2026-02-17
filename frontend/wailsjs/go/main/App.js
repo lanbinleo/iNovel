@@ -110,6 +110,10 @@ export function LoadWorkspaceFile(arg1) {
   return window['go']['main']['App']['LoadWorkspaceFile'](arg1);
 }
 
+export function MoveChapter(arg1, arg2) {
+  return window['go']['main']['App']['MoveChapter'](arg1, arg2);
+}
+
 export function MoveFile(arg1, arg2) {
   return window['go']['main']['App']['MoveFile'](arg1, arg2);
 }
