@@ -10,11 +10,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // Version 应用版本号（构建时注入）
-var Version = "1.0.0"
+var Version = "0.1.0"
 
 // App struct
 type App struct {
@@ -840,11 +841,12 @@ type UpdateInfo struct {
 	ReleaseURL     string `json:"release_url"`
 }
 
-// CheckUpdate 检查更新
+// CheckUpdate 检查更新（仅检查稳定版本，忽略 prerelease）
 func (a *App) CheckUpdate() (*UpdateInfo, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	resp, err := client.Get("https://api.github.com/repos/lanbinleo/iNovel/releases/latest")
+	// 获取所有 releases
+	resp, err := client.Get("https://api.github.com/repos/lanbinleo/iNovel/releases")
 	if err != nil {
 		return &UpdateInfo{
 			HasUpdate:      false,
@@ -860,71 +862,75 @@ func (a *App) CheckUpdate() (*UpdateInfo, error) {
 		}, nil
 	}
 
-	var release struct {
-		TagName string `json:"tag_name"`
-		HTMLURL string `json:"html_url"`
+	var releases []struct {
+		TagName    string `json:"tag_name"`
+		HTMLURL    string `json:"html_url"`
+		Prerelease bool   `json:"prerelease"`
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
 		return &UpdateInfo{
 			HasUpdate:      false,
 			CurrentVersion: Version,
 		}, nil
 	}
 
-	// 比较版本号（去掉 v 前缀）
-	latestVersion := strings.TrimPrefix(release.TagName, "v")
-	currentVersion := strings.TrimPrefix(Version, "v")
+	// 解析当前版本
+	currentVersion, err := parseVersion(Version)
+	if err != nil {
+		return &UpdateInfo{
+			HasUpdate:      false,
+			CurrentVersion: Version,
+		}, nil
+	}
 
-	hasUpdate := compareVersions(latestVersion, currentVersion) > 0
+	// 找到最新的稳定版本
+	var latestStable *semver.Version
+	var latestReleaseURL string
+
+	for _, release := range releases {
+		// 跳过预发布版本
+		if release.Prerelease {
+			continue
+		}
+
+		version, err := parseVersion(release.TagName)
+		if err != nil {
+			continue
+		}
+
+		if latestStable == nil || version.GreaterThan(latestStable) {
+			latestStable = version
+			latestReleaseURL = release.HTMLURL
+		}
+	}
+
+	if latestStable == nil {
+		// 没有找到稳定版本
+		return &UpdateInfo{
+			HasUpdate:      false,
+			CurrentVersion: Version,
+		}, nil
+	}
+
+	hasUpdate := latestStable.GreaterThan(currentVersion)
 
 	return &UpdateInfo{
 		HasUpdate:      hasUpdate,
-		LatestVersion:  release.TagName,
+		LatestVersion:  "v" + latestStable.String(),
 		CurrentVersion: Version,
-		ReleaseURL:     release.HTMLURL,
+		ReleaseURL:     latestReleaseURL,
 	}, nil
+}
+
+// parseVersion 解析版本号，支持带 v 前缀的版本
+func parseVersion(versionStr string) (*semver.Version, error) {
+	// 去掉 v 前缀
+	cleanVersion := strings.TrimPrefix(versionStr, "v")
+	return semver.NewVersion(cleanVersion)
 }
 
 // OpenURL 在默认浏览器中打开 URL
 func (a *App) OpenURL(url string) {
 	runtime.BrowserOpenURL(a.ctx, url)
-}
-
-// compareVersions 比较版本号，返回 1 表示 v1 > v2，-1 表示 v1 < v2，0 表示相等
-func compareVersions(v1, v2 string) int {
-	parts1 := strings.Split(v1, ".")
-	parts2 := strings.Split(v2, ".")
-
-	maxLen := len(parts1)
-	if len(parts2) > maxLen {
-		maxLen = len(parts2)
-	}
-
-	for i := 0; i < maxLen; i++ {
-		var n1, n2 int
-		if i < len(parts1) {
-			for _, c := range parts1[i] {
-				if c >= '0' && c <= '9' {
-					n1 = n1*10 + int(c-'0')
-				}
-			}
-		}
-		if i < len(parts2) {
-			for _, c := range parts2[i] {
-				if c >= '0' && c <= '9' {
-					n2 = n2*10 + int(c-'0')
-				}
-			}
-		}
-
-		if n1 > n2 {
-			return 1
-		}
-		if n1 < n2 {
-			return -1
-		}
-	}
-
-	return 0
 }

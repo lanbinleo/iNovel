@@ -3,6 +3,7 @@ module github.com/lanbinleo/inovel
 go 1.23
 
 require (
+	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/energye/systray v1.0.2
 	github.com/wailsapp/wails/v2 v2.11.0
 )
