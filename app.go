@@ -68,7 +68,7 @@ func (a *App) getConfigPath() (string, error) {
 		return "", err
 	}
 
-	configDir := filepath.Join(homeDir, ".novel-writer")
+	configDir := filepath.Join(homeDir, ".inovel")
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		return "", err
 	}

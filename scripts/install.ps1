@@ -1,5 +1,5 @@
 # iNovel Windows Installer
-# Usage: irm https://raw.githubusercontent.com/lanbinleo/novel-writer/main/scripts/install.ps1 | iex
+# Usage: irm https://raw.githubusercontent.com/lanbinleo/iNovel/main/scripts/install.ps1 | iex
 
 $ErrorActionPreference = "Stop"
 
@@ -14,7 +14,7 @@ Write-Host ""
 # Get latest release info
 Write-Host "Fetching latest release..." -ForegroundColor Yellow
 try {
-    $releaseInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/lanbinleo/novel-writer/releases/latest"
+    $releaseInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/lanbinleo/iNovel/releases/latest"
     $version = $releaseInfo.tag_name
     $downloadUrl = $releaseInfo.assets | Where-Object { $_.name -like "*windows-amd64.exe" } | Select-Object -ExpandProperty browser_download_url
 } catch {

@@ -650,12 +650,12 @@ async function init() {
     // 初始化版本信息和检查更新
     initVersionInfo();
 
-    console.log('小说写作器已启动');
+    console.log('iNovel已启动');
 }
 
 // ============ 版本和更新 ============
 
-let releaseUrl = 'https://github.com/lanbinleo/novel-writer';
+let releaseUrl = 'https://github.com/lanbinleo/iNovel';
 
 async function initVersionInfo() {
     try {

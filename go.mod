@@ -1,4 +1,4 @@
-module novel-writer
+module github.com/lanbinleo/inovel
 
 go 1.23
 

@@ -34,7 +34,7 @@ wails generate module
   - 窗口控制：`WindowMinimize`, `WindowMaximize`, `WindowClose`, `WindowQuit`, `WindowShow`
   - 导出：`ExportAsTxt`, `ExportAsImagePath`, `SaveImageData`
   - 配置：`GetConfig`, `SetTheme`, `SetEditorWidth`
-  - 配置存储在 `~/.novel-writer/config.json`
+  - 配置存储在 `~/.inovel/config.json`
 
 ### 前端 (TypeScript)
 

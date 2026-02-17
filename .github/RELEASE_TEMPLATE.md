@@ -22,7 +22,7 @@
 
 | Platform | Architecture | Download |
 |----------|--------------|----------|
-| Windows | x64 | [iNovel-windows-amd64.exe](https://github.com/lanbinleo/novel-writer/releases/download/$TAG/iNovel-windows-amd64.exe) |
+| Windows | x64 | [iNovel-windows-amd64.exe](https://github.com/lanbinleo/iNovel/releases/download/$TAG/iNovel-windows-amd64.exe) |
 
 > **Note**: 发布后请将 `$TAG` 替换为实际的版本号（如 `v1.0.0`）
 
@@ -39,5 +39,5 @@
 在 PowerShell 中运行以下命令，自动安装到用户目录并创建桌面快捷方式：
 
 ```powershell
-irm https://raw.githubusercontent.com/lanbinleo/novel-writer/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/lanbinleo/iNovel/main/scripts/install.ps1 | iex
 ```

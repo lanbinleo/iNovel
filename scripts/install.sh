@@ -1,11 +1,11 @@
 #!/bin/bash
 # iNovel Installer for macOS/Linux
-# Usage: curl -fsSL https://raw.githubusercontent.com/lanbinleo/novel-writer/main/scripts/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/lanbinleo/iNovel/main/scripts/install.sh | bash
 
 set -e
 
 INSTALL_DIR="$HOME/.inovel"
-REPO="lanbinleo/novel-writer"
+REPO="lanbinleo/iNovel"
 
 echo "iNovel Installer"
 echo "================"

@@ -97,7 +97,7 @@ func main() {
 		},
 		// 单实例锁定 - 再次启动时显示已有窗口
 		SingleInstanceLock: &options.SingleInstanceLock{
-			UniqueId: "novel-writer-app-unique-id",
+			UniqueId: "inovel-app-unique-id",
 			OnSecondInstanceLaunch: func(secondInstanceData options.SecondInstanceData) {
 				runtime.WindowShow(app.ctx)
 			},

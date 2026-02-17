@@ -184,7 +184,7 @@ export function createExportWatermark(textColor: string): HTMLElement {
     `;
     watermark.innerHTML = `
         <div style="color: ${textColor}; opacity: 0.6; margin-bottom: 0.3em;">本文使用 iNovel 创作</div>
-        <div style="color: ${textColor}; opacity: 0.35; font-size: 0.85em;">By Lanbinleo with ♥️ lanbinleo/novel-writer</div>
+        <div style="color: ${textColor}; opacity: 0.35; font-size: 0.85em;">By Lanbinleo with ♥️ lanbinleo/iNovel</div>
     `;
     return watermark;
 }
