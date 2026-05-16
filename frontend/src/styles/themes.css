@@ -47,6 +47,11 @@
   --sidebar-hover: rgba(166, 139, 111, 0.08);
   --sidebar-active: rgba(166, 139, 111, 0.12);
 
+  /* 书库 */
+  --library-bg: rgba(250, 248, 245, 0.72);
+  --library-item-bg: rgba(255, 253, 249, 0.72);
+  --library-item-hover: rgba(237, 244, 243, 0.85);
+
   /* 滚动条 */
   --scrollbar-track: transparent;
   --scrollbar-thumb: #d5cfc5;
@@ -111,6 +116,11 @@
   --sidebar-border: #3a3835;
   --sidebar-hover: rgba(184, 155, 122, 0.08);
   --sidebar-active: rgba(184, 155, 122, 0.12);
+
+  /* 书库 */
+  --library-bg: rgba(28, 27, 25, 0.72);
+  --library-item-bg: rgba(36, 35, 32, 0.78);
+  --library-item-hover: rgba(35, 44, 44, 0.86);
 
   /* 滚动条 */
   --scrollbar-track: transparent;
