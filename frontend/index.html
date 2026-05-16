@@ -7,7 +7,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 <div id="app">
@@ -168,6 +168,11 @@
                         <div class="sidebar-list-empty">暂无章节</div>
                     </div>
                 </div>
+                <div class="sidebar-footer">
+                    <a class="version-info" href="#" title="访问 GitHub">
+                        <span>iNovel By Lanbinleo</span>
+                    </a>
+                </div>
             </div>
             <!-- 编辑区 -->
             <div id="editor-view" class="editor-container">
@@ -232,6 +237,12 @@
                         <button id="chapter-delete-btn" class="detail-btn danger" disabled>删除章节</button>
                     </div>
                 </section>
+                <section class="detail-section detail-section-wide">
+                    <div class="detail-section-title">章节排序</div>
+                    <div id="detail-chapter-list" class="detail-chapter-list">
+                        <div class="sidebar-list-empty">请选择小说</div>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
@@ -240,7 +251,10 @@
     <div id="settings-page" class="settings-page hidden">
         <div class="settings-panel">
             <div class="settings-header">
-                <div class="settings-title">设置</div>
+                <div>
+                    <div class="settings-title">设置</div>
+                    <div class="settings-subtitle">调整写作界面的显示方式</div>
+                </div>
                 <button id="settings-close-btn" class="icon-btn settings-close-btn" title="关闭">
                     <svg width="14" height="14" viewBox="0 0 12 12">
                         <path d="M1 1L11 11M11 1L1 11" stroke="currentColor" stroke-width="1.2"/>
@@ -248,23 +262,147 @@
                 </button>
             </div>
             <div class="settings-body">
-                <div class="settings-section">
-                    <div class="settings-section-title">基础</div>
-                    <div class="settings-item">
-                        <div class="settings-item-label">数据库模式</div>
-                        <div class="settings-item-value">单库（library.db）</div>
-                    </div>
-                    <div class="settings-item">
-                        <div class="settings-item-label">主题与宽度</div>
-                        <div class="settings-item-value">通过工具栏按钮切换</div>
-                    </div>
-                </div>
-                <div class="settings-section">
-                    <div class="settings-section-title">导入</div>
-                    <div class="settings-item">
-                        <div class="settings-item-label">Markdown / TXT</div>
-                        <div class="settings-item-value">将在此页面或工具栏提供入口</div>
-                    </div>
+                <nav class="settings-nav" aria-label="设置分类">
+                    <button class="settings-nav-item active" data-settings-tab="appearance">外观</button>
+                    <button class="settings-nav-item" data-settings-tab="editor">编辑器</button>
+                </nav>
+                <div class="settings-content">
+                    <section class="settings-section active" data-settings-panel="appearance">
+                        <div class="settings-section-heading">
+                            <div class="settings-section-title">外观</div>
+                            <div class="settings-section-desc">选择界面主题和日夜模式。</div>
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label">主题</label>
+                            <div class="theme-grid">
+                                <button class="theme-choice" data-theme-family="notion">
+                                    <span class="theme-choice-swatch theme-notion"></span>
+                                    <span>
+                                        <span class="theme-choice-name">Notion</span>
+                                        <span class="theme-choice-desc">黑白灰为主，紫色强调</span>
+                                    </span>
+                                </button>
+                                <button class="theme-choice" data-theme-family="warm">
+                                    <span class="theme-choice-swatch theme-warm"></span>
+                                    <span>
+                                        <span class="theme-choice-name">Warm</span>
+                                        <span class="theme-choice-desc">柔和暖色，适合长写作</span>
+                                    </span>
+                                </button>
+                                <button class="theme-choice" data-theme-family="paper">
+                                    <span class="theme-choice-swatch theme-paper"></span>
+                                    <span>
+                                        <span class="theme-choice-name">Paper</span>
+                                        <span class="theme-choice-desc">纸张感，但保持平面</span>
+                                    </span>
+                                </button>
+                                <button class="theme-choice" data-theme-family="ink">
+                                    <span class="theme-choice-swatch theme-ink"></span>
+                                    <span>
+                                        <span class="theme-choice-name">Ink</span>
+                                        <span class="theme-choice-desc">更高对比度的写作环境</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label">模式</label>
+                            <div class="segmented-control">
+                                <button class="segmented-option" data-theme-mode="light">日间</button>
+                                <button class="segmented-option" data-theme-mode="dark">夜间</button>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="settings-section" data-settings-panel="editor">
+                        <div class="settings-section-heading">
+                            <div class="settings-section-title">编辑器</div>
+                            <div class="settings-section-desc">设置正文宽度和字号档位。</div>
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label">正文宽度</label>
+                            <div class="settings-control-stack">
+                                <div class="segmented-control">
+                                    <button class="segmented-option" data-width-mode="narrow">窄</button>
+                                    <button class="segmented-option" data-width-mode="medium">中</button>
+                                    <button class="segmented-option" data-width-mode="wide">宽</button>
+                                </div>
+                                <div class="font-size-settings">
+                                    <label class="font-size-setting">
+                                        <span>窄</span>
+                                        <span class="number-stepper">
+                                            <input id="width-narrow-input" class="settings-number-input" type="number" min="420" max="900" step="10">
+                                            <span class="number-stepper-actions">
+                                                <button type="button" class="number-stepper-btn" data-step-input="width-narrow-input" data-step-delta="10">+</button>
+                                                <button type="button" class="number-stepper-btn" data-step-input="width-narrow-input" data-step-delta="-10">−</button>
+                                            </span>
+                                        </span>
+                                    </label>
+                                    <label class="font-size-setting">
+                                        <span>中</span>
+                                        <span class="number-stepper">
+                                            <input id="width-medium-input" class="settings-number-input" type="number" min="520" max="1100" step="10">
+                                            <span class="number-stepper-actions">
+                                                <button type="button" class="number-stepper-btn" data-step-input="width-medium-input" data-step-delta="10">+</button>
+                                                <button type="button" class="number-stepper-btn" data-step-input="width-medium-input" data-step-delta="-10">−</button>
+                                            </span>
+                                        </span>
+                                    </label>
+                                    <label class="font-size-setting">
+                                        <span>宽</span>
+                                        <span class="number-stepper">
+                                            <input id="width-wide-input" class="settings-number-input" type="number" min="620" max="1400" step="10">
+                                            <span class="number-stepper-actions">
+                                                <button type="button" class="number-stepper-btn" data-step-input="width-wide-input" data-step-delta="10">+</button>
+                                                <button type="button" class="number-stepper-btn" data-step-input="width-wide-input" data-step-delta="-10">−</button>
+                                            </span>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label">正文字体</label>
+                            <div class="segmented-control">
+                                <button class="segmented-option" data-editor-font="serif">有衬线</button>
+                                <button class="segmented-option" data-editor-font="sans">无衬线</button>
+                            </div>
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label">字号档位</label>
+                            <div class="font-size-settings">
+                                <label class="font-size-setting">
+                                    <span>小</span>
+                                    <span class="number-stepper">
+                                        <input id="font-size-small-input" class="settings-number-input" type="number" min="12" max="30" step="1">
+                                        <span class="number-stepper-actions">
+                                            <button type="button" class="number-stepper-btn" data-step-input="font-size-small-input" data-step-delta="1">+</button>
+                                            <button type="button" class="number-stepper-btn" data-step-input="font-size-small-input" data-step-delta="-1">−</button>
+                                        </span>
+                                    </span>
+                                </label>
+                                <label class="font-size-setting">
+                                    <span>中</span>
+                                    <span class="number-stepper">
+                                        <input id="font-size-medium-input" class="settings-number-input" type="number" min="12" max="32" step="1">
+                                        <span class="number-stepper-actions">
+                                            <button type="button" class="number-stepper-btn" data-step-input="font-size-medium-input" data-step-delta="1">+</button>
+                                            <button type="button" class="number-stepper-btn" data-step-input="font-size-medium-input" data-step-delta="-1">−</button>
+                                        </span>
+                                    </span>
+                                </label>
+                                <label class="font-size-setting">
+                                    <span>大</span>
+                                    <span class="number-stepper">
+                                        <input id="font-size-large-input" class="settings-number-input" type="number" min="14" max="36" step="1">
+                                        <span class="number-stepper-actions">
+                                            <button type="button" class="number-stepper-btn" data-step-input="font-size-large-input" data-step-delta="1">+</button>
+                                            <button type="button" class="number-stepper-btn" data-step-input="font-size-large-input" data-step-delta="-1">−</button>
+                                        </span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>
@@ -296,6 +434,8 @@
         导出为长图
     </button>
 </div>
+
+<div id="context-menu" class="popup context-menu hidden"></div>
 
 <script src="./src/main.ts" type="module"></script>
 </body>

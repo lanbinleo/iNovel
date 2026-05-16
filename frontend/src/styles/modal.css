@@ -6,8 +6,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
+    background-color: rgba(0, 0, 0, 0.42);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -25,10 +24,10 @@
 }
 
 .modal {
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-modal);
     min-width: 320px;
     max-width: 400px;
     animation: slideIn var(--duration-base) ease;
@@ -71,8 +70,8 @@
     padding: 10px 14px;
     font-size: 14px;
     color: var(--text-primary);
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-md);
     outline: none;
     transition:
@@ -82,7 +81,7 @@
 
 .modal-input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(166, 139, 111, 0.15);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .modal-input::placeholder {
@@ -104,8 +103,7 @@
     cursor: pointer;
     transition:
         background-color var(--duration-fast) ease,
-        color var(--duration-fast) ease,
-        transform var(--duration-fast) ease;
+        color var(--duration-fast) ease;
     border: none;
 }
 
@@ -129,7 +127,7 @@
 }
 
 .modal-btn:active {
-    transform: scale(0.98);
+    opacity: 0.9;
 }
 
 /* ============ 导出预览模态框 ============ */
@@ -140,8 +138,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
+    background-color: rgba(0, 0, 0, 0.48);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -154,10 +151,10 @@
 }
 
 .export-preview-modal {
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-modal);
     width: 90vw;
     max-width: 900px;
     height: 85vh;

@@ -1,7 +1,7 @@
 import './style.css';
 
 // 导入Wails运行时
-import { GetConfig, SetTheme, SetEditorWidth, WindowMinimize, WindowMaximize, WindowClose, ExportAsTxt, ExportAsImagePathWithName, SaveImageData, GetVersion, CheckUpdate, OpenURL, ListNovels, ListRecentChapters, CreateNovel, UpdateNovel, DeleteNovel, ListChapters, CreateChapter, DeleteChapter, MoveChapter, GetChapterContent, SaveChapterContent, ImportNovelFromDialog } from '../wailsjs/go/main/App';
+import { GetConfig, SetTheme, SetAppearance, SetEditorWidth, SetEditorWidthValues, SetEditorFont, SetFontSize, SetFontSizeValues, WindowMinimize, WindowMaximize, WindowClose, ExportAsTxt, ExportAsImagePathWithName, SaveImageData, GetVersion, CheckUpdate, OpenURL, ListNovels, ListRecentChapters, CreateNovel, UpdateNovel, DeleteNovel, ListChapters, CreateChapter, DeleteChapter, MoveChapter, GetChapterContent, SaveChapterContent, ImportNovelFromDialog } from '../wailsjs/go/main/App';
 
 // 导入编辑器
 import { Editor, createEditor } from './editor/Editor';
@@ -50,9 +50,28 @@ let isDirty = false;
 let autoSaveTimer: number | null = null;
 const AUTO_SAVE_INTERVAL = 5000;
 const DRAFT_PREFIX = 'inovel:draft:';
+type ThemeFamily = 'notion' | 'warm' | 'paper' | 'ink';
+type ThemeMode = 'light' | 'dark';
+type ThemeName = `${ThemeFamily}-${ThemeMode}`;
+type FontSizeMode = 'small' | 'medium' | 'large';
+type EditorFontMode = 'serif' | 'sans';
+
 let editorWidthMode: 'narrow' | 'medium' | 'wide' = 'medium';
-let currentTheme: 'light' | 'dark' = 'light';
-let currentFontSize: 'small' | 'medium' | 'large' = 'medium';
+let editorWidthValues: Record<'narrow' | 'medium' | 'wide', number> = {
+    narrow: 580,
+    medium: 720,
+    wide: 980
+};
+let editorFontMode: EditorFontMode = 'serif';
+let currentThemeFamily: ThemeFamily = 'notion';
+let currentThemeMode: ThemeMode = 'dark';
+let currentTheme: ThemeName = 'notion-dark';
+let currentFontSize: FontSizeMode = 'medium';
+let fontSizeValues: Record<FontSizeMode, number> = {
+    small: 16,
+    medium: 18,
+    large: 20
+};
 let currentNovelId: string | null = null;
 let currentChapterId: string | null = null;
 let currentLibraryCategory: 'recent' | 'novel' = 'recent';
@@ -62,6 +81,7 @@ let recentChapters: RecentChapterSummary[] = [];
 let editor: Editor;
 let novelDirty = false;
 let saveInFlight: Promise<boolean> | null = null;
+let draggingChapterId: string | null = null;
 
 // ============ DOM 元素 ============
 const appRoot = document.getElementById('app') as HTMLDivElement;
@@ -86,6 +106,18 @@ const updateBadge = document.getElementById('update-badge') as HTMLSpanElement;
 const settingsBtn = document.getElementById('settings-btn') as HTMLButtonElement;
 const settingsPage = document.getElementById('settings-page') as HTMLDivElement;
 const settingsCloseBtn = document.getElementById('settings-close-btn') as HTMLButtonElement;
+const settingsNavItems = document.querySelectorAll<HTMLButtonElement>('.settings-nav-item');
+const settingsPanels = document.querySelectorAll<HTMLElement>('[data-settings-panel]');
+const themeFamilyButtons = document.querySelectorAll<HTMLButtonElement>('[data-theme-family]');
+const themeModeButtons = document.querySelectorAll<HTMLButtonElement>('[data-theme-mode]');
+const widthModeButtons = document.querySelectorAll<HTMLButtonElement>('[data-width-mode]');
+const editorFontButtons = document.querySelectorAll<HTMLButtonElement>('[data-editor-font]');
+const widthNarrowInput = document.getElementById('width-narrow-input') as HTMLInputElement;
+const widthMediumInput = document.getElementById('width-medium-input') as HTMLInputElement;
+const widthWideInput = document.getElementById('width-wide-input') as HTMLInputElement;
+const fontSizeSmallInput = document.getElementById('font-size-small-input') as HTMLInputElement;
+const fontSizeMediumInput = document.getElementById('font-size-medium-input') as HTMLInputElement;
+const fontSizeLargeInput = document.getElementById('font-size-large-input') as HTMLInputElement;
 const libraryShell = document.getElementById('library-shell') as HTMLDivElement;
 const writingView = document.getElementById('writing-view') as HTMLDivElement;
 const detailView = document.getElementById('detail-view') as HTMLDivElement;
@@ -113,6 +145,8 @@ const novelDeleteBtn = document.getElementById('novel-delete-btn') as HTMLButton
 const chapterDeleteBtn = document.getElementById('chapter-delete-btn') as HTMLButtonElement;
 const chapterMoveUpBtn = document.getElementById('chapter-move-up-btn') as HTMLButtonElement;
 const chapterMoveDownBtn = document.getElementById('chapter-move-down-btn') as HTMLButtonElement;
+const detailChapterList = document.getElementById('detail-chapter-list') as HTMLDivElement;
+const contextMenu = document.getElementById('context-menu') as HTMLDivElement;
 
 // ============ 编辑器辅助功能 ============
 
@@ -270,6 +304,7 @@ function refreshDetailView() {
     if (chapterOutlineInput && currentChapterId && !chapterOutlineInput.value && chapter?.outline) {
         chapterOutlineInput.value = chapter.outline;
     }
+    renderDetailChapterList();
 }
 
 function setChapterHeaderEnabled(enabled: boolean, placeholder: string) {
@@ -367,6 +402,7 @@ function renderNovelList() {
         item.appendChild(title);
         item.appendChild(summary);
         item.addEventListener('click', () => selectNovel(novel.id));
+        item.addEventListener('contextmenu', (event) => showNovelContextMenu(event, novel.id));
 
         novelList.appendChild(item);
     }
@@ -374,6 +410,12 @@ function renderNovelList() {
 
 function renderLibraryList() {
     if (!libraryList) return;
+
+    if (currentLibraryCategory === 'novel' && currentNovelId) {
+        renderNovelChapterLibraryList();
+        return;
+    }
+
     if (libraryTitle) libraryTitle.textContent = 'Recent';
     if (librarySubtitle) librarySubtitle.textContent = recentChapters.length > 0 ? '最近更新的章节' : '还没有更新记录';
 
@@ -404,8 +446,47 @@ function renderLibraryList() {
         item.appendChild(summary);
         item.appendChild(meta);
         item.addEventListener('click', () => openRecentChapter(recent));
+        item.addEventListener('contextmenu', (event) => showRecentChapterContextMenu(event, recent));
         libraryList.appendChild(item);
     }
+}
+
+function renderNovelChapterLibraryList() {
+    if (!libraryList || !currentNovelId) return;
+    const novel = novels.find(n => n.id === currentNovelId);
+    if (libraryTitle) libraryTitle.textContent = novel?.title || '未命名小说';
+    if (librarySubtitle) librarySubtitle.textContent = chapters.length > 0 ? `${chapters.length} 个章节` : '还没有章节';
+
+    libraryList.innerHTML = '';
+    if (chapters.length === 0) {
+        libraryList.innerHTML = '<div class="library-empty">还没有章节。可以从左侧新建章节。</div>';
+        return;
+    }
+
+    chapters.forEach((chapter, index) => {
+        const item = document.createElement('button');
+        item.className = 'library-list-item';
+        item.type = 'button';
+
+        const title = document.createElement('div');
+        title.className = 'library-list-title';
+        title.textContent = chapter.title || `第 ${index + 1} 章`;
+
+        const summary = document.createElement('div');
+        summary.className = 'library-list-sub';
+        summary.textContent = chapter.outline || '暂无梗概';
+
+        const meta = document.createElement('div');
+        meta.className = 'library-list-meta';
+        meta.textContent = `第 ${index + 1} 章`;
+
+        item.appendChild(title);
+        item.appendChild(summary);
+        item.appendChild(meta);
+        item.addEventListener('click', () => selectChapter(chapter.id));
+        item.addEventListener('contextmenu', (event) => showChapterContextMenu(event, chapter.id));
+        libraryList.appendChild(item);
+    });
 }
 
 function renderChapterList() {
@@ -415,6 +496,7 @@ function renderChapterList() {
     if (!currentNovelId) {
         chapterList.innerHTML = '<div class="sidebar-list-empty">请选择小说</div>';
         if (newChapterBtn) newChapterBtn.disabled = true;
+        renderDetailChapterList();
         return;
     }
 
@@ -422,12 +504,14 @@ function renderChapterList() {
 
     if (chapters.length === 0) {
         chapterList.innerHTML = '<div class="sidebar-list-empty">暂无章节</div>';
+        renderDetailChapterList();
         return;
     }
 
     chapters.forEach((chapter, index) => {
         const item = document.createElement('div');
         item.className = 'sidebar-list-item';
+        item.draggable = true;
         if (currentChapterId === chapter.id) item.classList.add('selected');
 
         const title = document.createElement('div');
@@ -441,11 +525,121 @@ function renderChapterList() {
         item.appendChild(title);
         item.appendChild(outline);
         item.addEventListener('click', () => selectChapter(chapter.id));
+        item.addEventListener('contextmenu', (event) => showChapterContextMenu(event, chapter.id));
+        addChapterDragEvents(item, chapter.id, index);
 
         chapterList.appendChild(item);
     });
 
     updateChapterMoveState();
+    renderDetailChapterList();
+}
+
+function renderDetailChapterList() {
+    if (!detailChapterList) return;
+    detailChapterList.innerHTML = '';
+
+    if (!currentNovelId) {
+        detailChapterList.innerHTML = '<div class="sidebar-list-empty">请选择小说</div>';
+        return;
+    }
+
+    if (chapters.length === 0) {
+        detailChapterList.innerHTML = '<div class="sidebar-list-empty">暂无章节</div>';
+        return;
+    }
+
+    chapters.forEach((chapter, index) => {
+        const item = document.createElement('div');
+        item.className = 'detail-chapter-item';
+        item.draggable = true;
+        if (currentChapterId === chapter.id) item.classList.add('selected');
+
+        const number = document.createElement('div');
+        number.className = 'detail-chapter-index';
+        number.textContent = String(index + 1).padStart(2, '0');
+
+        const main = document.createElement('div');
+        main.className = 'detail-chapter-main';
+
+        const title = document.createElement('div');
+        title.className = 'detail-chapter-title';
+        title.textContent = chapter.title || `第 ${index + 1} 章`;
+
+        const outline = document.createElement('div');
+        outline.className = 'detail-chapter-outline';
+        outline.textContent = chapter.outline || '暂无梗概';
+
+        const action = document.createElement('button');
+        action.className = 'icon-btn detail-chapter-action';
+        action.type = 'button';
+        action.title = '进入编辑';
+        action.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+        action.addEventListener('click', (event) => {
+            event.stopPropagation();
+            selectChapter(chapter.id);
+        });
+
+        main.appendChild(title);
+        main.appendChild(outline);
+        item.appendChild(number);
+        item.appendChild(main);
+        item.appendChild(action);
+        item.addEventListener('click', () => selectChapter(chapter.id));
+        item.addEventListener('contextmenu', (event) => showChapterContextMenu(event, chapter.id));
+        addChapterDragEvents(item, chapter.id, index);
+        detailChapterList.appendChild(item);
+    });
+}
+
+function addChapterDragEvents(item: HTMLElement, chapterId: string, targetIndex: number) {
+    item.addEventListener('dragstart', (event) => {
+        draggingChapterId = chapterId;
+        item.classList.add('dragging');
+        event.dataTransfer?.setData('text/plain', chapterId);
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+        }
+    });
+    item.addEventListener('dragend', () => {
+        draggingChapterId = null;
+        item.classList.remove('dragging');
+    });
+    item.addEventListener('dragover', (event) => {
+        if (!draggingChapterId || draggingChapterId === chapterId) return;
+        event.preventDefault();
+        if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = 'move';
+        }
+    });
+    item.addEventListener('drop', async (event) => {
+        event.preventDefault();
+        const sourceId = draggingChapterId || event.dataTransfer?.getData('text/plain');
+        if (!sourceId || sourceId === chapterId) return;
+        await moveChapterToIndex(sourceId, targetIndex);
+    });
+}
+
+async function moveChapterToIndex(chapterId: string, targetIndex: number) {
+    if (!currentNovelId) return;
+    const sourceIndex = chapters.findIndex(chapter => chapter.id === chapterId);
+    if (sourceIndex < 0 || sourceIndex === targetIndex) return;
+
+    const direction = sourceIndex < targetIndex ? 'down' : 'up';
+    const steps = Math.abs(targetIndex - sourceIndex);
+    try {
+        for (let i = 0; i < steps; i += 1) {
+            const moved = await MoveChapter(chapterId, direction);
+            if (!moved) break;
+        }
+        currentChapterId = chapterId;
+        await loadChapters(currentNovelId);
+        renderChapterList();
+        renderDetailChapterList();
+    } catch (error) {
+        console.error('移动章节失败:', error);
+        alert('移动章节失败: ' + error);
+    }
 }
 
 function formatDateTime(value: string): string {
@@ -559,13 +753,14 @@ async function selectRecent() {
     if (novelInfoTitle) novelInfoTitle.textContent = '-';
     updateFileTitle();
     renderNovelList();
+    renderChapterList();
     await loadRecentChapters();
     renderLibraryList();
     showLibraryView();
 }
 
 async function selectNovel(novelId: string) {
-    if (currentNovelId !== novelId) {
+    if (currentNovelId !== novelId || isDirty || novelDirty) {
         const ok = await confirmDiscardIfDirty();
         if (!ok) return;
     }
@@ -583,18 +778,13 @@ async function selectNovel(novelId: string) {
 
     renderNovelList();
     renderChapterList();
+    renderLibraryList();
+    editor.clear();
+    updateWordCount();
+    updateSaveStatus(true);
+    setChapterHeaderEnabled(false, chapters.length > 0 ? '请选择章节' : '暂无章节');
+    updateFileTitle();
     showLibraryView();
-    showEditorView();
-
-    if (chapters.length > 0) {
-        await selectChapter(chapters[0].id);
-    } else {
-        editor.clear();
-        updateWordCount();
-        updateSaveStatus(true);
-        setChapterHeaderEnabled(false, '暂无章节');
-        updateFileTitle();
-    }
 }
 
 async function selectChapter(chapterId: string) {
@@ -916,11 +1106,13 @@ async function toggleWidthMode() {
     const modes: Array<'narrow' | 'medium' | 'wide'> = ['narrow', 'medium', 'wide'];
     const currentIndex = modes.indexOf(editorWidthMode);
     const nextIndex = (currentIndex + 1) % modes.length;
-    editorWidthMode = modes[nextIndex];
+    await setEditorWidthMode(modes[nextIndex]);
+}
 
-    editorContainer.classList.remove('width-narrow', 'width-medium', 'width-wide');
-    editorContainer.classList.add(`width-${editorWidthMode}`);
-
+async function setEditorWidthMode(width: 'narrow' | 'medium' | 'wide', persist = true) {
+    editorWidthMode = width;
+    applyEditorWidthMode();
+    if (!persist) return;
     try {
         await SetEditorWidth(editorWidthMode);
     } catch (error) {
@@ -928,10 +1120,58 @@ async function toggleWidthMode() {
     }
 }
 
-async function toggleTheme() {
-    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-    applyTheme(currentTheme);
+function applyEditorWidthMode() {
+    editorContainer.classList.remove('width-narrow', 'width-medium', 'width-wide');
+    editorContainer.classList.add(`width-${editorWidthMode}`);
+    widthModeButtons.forEach(button => {
+        button.classList.toggle('active', button.getAttribute('data-width-mode') === editorWidthMode);
+    });
+}
 
+function applyEditorWidthValues() {
+    document.documentElement.style.setProperty('--editor-width-narrow', `${editorWidthValues.narrow}px`);
+    document.documentElement.style.setProperty('--editor-width-medium', `${editorWidthValues.medium}px`);
+    document.documentElement.style.setProperty('--editor-width-wide', `${editorWidthValues.wide}px`);
+    if (widthNarrowInput) widthNarrowInput.value = String(editorWidthValues.narrow);
+    if (widthMediumInput) widthMediumInput.value = String(editorWidthValues.medium);
+    if (widthWideInput) widthWideInput.value = String(editorWidthValues.wide);
+}
+
+async function saveEditorWidthValuesFromSettings() {
+    editorWidthValues = {
+        narrow: readNumberInput(widthNarrowInput, editorWidthValues.narrow, 420, 900),
+        medium: readNumberInput(widthMediumInput, editorWidthValues.medium, 520, 1100),
+        wide: readNumberInput(widthWideInput, editorWidthValues.wide, 620, 1400)
+    };
+    applyEditorWidthValues();
+    try {
+        await SetEditorWidthValues(editorWidthValues.narrow, editorWidthValues.medium, editorWidthValues.wide);
+    } catch (error) {
+        console.error('保存宽度档位失败:', error);
+    }
+}
+
+function applyEditorFont() {
+    editorContainer.classList.remove('font-serif', 'font-sans');
+    editorContainer.classList.add(`font-${editorFontMode}`);
+    editorFontButtons.forEach(button => {
+        button.classList.toggle('active', button.getAttribute('data-editor-font') === editorFontMode);
+    });
+}
+
+async function setEditorFontMode(font: EditorFontMode) {
+    editorFontMode = font;
+    applyEditorFont();
+    try {
+        await SetEditorFont(font);
+    } catch (error) {
+        console.error('保存正文字体失败:', error);
+    }
+}
+
+async function toggleTheme() {
+    const nextMode: ThemeMode = currentThemeMode === 'light' ? 'dark' : 'light';
+    applyTheme(currentThemeFamily, nextMode);
     try {
         await SetTheme(currentTheme);
     } catch (error) {
@@ -939,14 +1179,48 @@ async function toggleTheme() {
     }
 }
 
-function applyTheme(theme: 'light' | 'dark') {
-    document.documentElement.setAttribute('data-theme', theme);
+function normalizeTheme(family: string | undefined, mode: string | undefined, theme: string | undefined): { family: ThemeFamily; mode: ThemeMode } {
+    let nextFamily = family as ThemeFamily;
+    let nextMode = mode as ThemeMode;
+
+    if ((!nextFamily || !nextMode) && theme) {
+        if (theme === 'light' || theme === 'dark') {
+            nextFamily = 'notion';
+            nextMode = theme;
+        } else {
+            const parts = theme.split('-');
+            const maybeMode = parts[parts.length - 1] as ThemeMode;
+            const maybeFamily = parts.slice(0, -1).join('-') as ThemeFamily;
+            if (maybeFamily && (maybeMode === 'light' || maybeMode === 'dark')) {
+                nextFamily = maybeFamily;
+                nextMode = maybeMode;
+            }
+        }
+    }
+
+    if (!['notion', 'warm', 'paper', 'ink'].includes(nextFamily)) {
+        nextFamily = 'notion';
+    }
+    if (nextMode !== 'light' && nextMode !== 'dark') {
+        nextMode = 'dark';
+    }
+
+    return { family: nextFamily, mode: nextMode };
+}
+
+function applyTheme(family: ThemeFamily, mode: ThemeMode) {
+    currentThemeFamily = family;
+    currentThemeMode = mode;
+    currentTheme = `${family}-${mode}`;
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    document.documentElement.setAttribute('data-theme-family', family);
+    document.documentElement.setAttribute('data-theme-mode', mode);
 
     // 更新主题按钮图标
     if (themeToggleBtn) {
         const svg = themeToggleBtn.querySelector('svg');
         if (svg) {
-            if (theme === 'dark') {
+            if (mode === 'dark') {
                 svg.innerHTML = `
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                 `;
@@ -958,6 +1232,13 @@ function applyTheme(theme: 'light' | 'dark') {
             }
         }
     }
+
+    themeFamilyButtons.forEach(button => {
+        button.classList.toggle('active', button.getAttribute('data-theme-family') === family);
+    });
+    themeModeButtons.forEach(button => {
+        button.classList.toggle('active', button.getAttribute('data-theme-mode') === mode);
+    });
 }
 
 // 字体大小功能
@@ -974,11 +1255,65 @@ function toggleFontSizePopup() {
     });
 }
 
-function setFontSize(size: 'small' | 'medium' | 'large') {
+async function setFontSize(size: FontSizeMode, persist = true) {
     currentFontSize = size;
-    editorContainer.classList.remove('font-small', 'font-medium', 'font-large');
-    editorContainer.classList.add(`font-${size}`);
+    applyFontSize();
     fontSizePopup.classList.add('hidden');
+    if (!persist) return;
+    try {
+        await SetFontSize(size);
+    } catch (error) {
+        console.error('保存字号配置失败:', error);
+    }
+}
+
+function applyFontSize() {
+    editorContainer.classList.remove('font-small', 'font-medium', 'font-large');
+    editorContainer.classList.add(`font-${currentFontSize}`);
+    fontSizePopup?.querySelectorAll('.popup-item').forEach(item => {
+        item.classList.toggle('active', item.getAttribute('data-size') === currentFontSize);
+    });
+}
+
+function applyFontSizeValues() {
+    document.documentElement.style.setProperty('--editor-font-small', `${fontSizeValues.small}px`);
+    document.documentElement.style.setProperty('--editor-font-medium', `${fontSizeValues.medium}px`);
+    document.documentElement.style.setProperty('--editor-font-large', `${fontSizeValues.large}px`);
+    if (fontSizeSmallInput) fontSizeSmallInput.value = String(fontSizeValues.small);
+    if (fontSizeMediumInput) fontSizeMediumInput.value = String(fontSizeValues.medium);
+    if (fontSizeLargeInput) fontSizeLargeInput.value = String(fontSizeValues.large);
+    updateFontSizePopupLabels();
+}
+
+function updateFontSizePopupLabels() {
+    fontSizePopup?.querySelectorAll<HTMLButtonElement>('.popup-item').forEach(item => {
+        const size = item.getAttribute('data-size') as FontSizeMode;
+        if (size && fontSizeValues[size]) {
+            const label = size === 'small' ? '小' : size === 'medium' ? '中' : '大';
+            item.textContent = `${label} ${fontSizeValues[size]}px`;
+        }
+    });
+}
+
+function readNumberInput(input: HTMLInputElement | null, fallback: number, min = 12, max = 36) {
+    if (!input) return fallback;
+    const value = Number(input.value);
+    if (!Number.isFinite(value)) return fallback;
+    return Math.min(max, Math.max(min, Math.round(value)));
+}
+
+async function saveFontSizeValuesFromSettings() {
+    fontSizeValues = {
+        small: readNumberInput(fontSizeSmallInput, fontSizeValues.small, 12, 30),
+        medium: readNumberInput(fontSizeMediumInput, fontSizeValues.medium, 12, 32),
+        large: readNumberInput(fontSizeLargeInput, fontSizeValues.large, 14, 36)
+    };
+    applyFontSizeValues();
+    try {
+        await SetFontSizeValues(fontSizeValues.small, fontSizeValues.medium, fontSizeValues.large);
+    } catch (error) {
+        console.error('保存字号档位失败:', error);
+    }
 }
 
 // 点击外部关闭弹出菜单
@@ -989,17 +1324,170 @@ document.addEventListener('click', (e) => {
     if (exportBtn && exportPopup && !exportBtn.contains(e.target as Node) && !exportPopup.contains(e.target as Node)) {
         exportPopup.classList.add('hidden');
     }
+    hideContextMenu();
 });
 
-settingsPage?.addEventListener('click', (e) => {
-    if (e.target === settingsPage) {
-        closeSettings();
-    }
+document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+    hideContextMenu();
 });
 
 window.addEventListener('beforeunload', () => {
     writeLocalDraft();
 });
+
+type ContextMenuItem = {
+    label: string;
+    disabled?: boolean;
+    danger?: boolean;
+    action: () => void | Promise<void>;
+};
+
+function showContextMenu(event: MouseEvent, items: ContextMenuItem[]) {
+    if (!contextMenu) return;
+    event.preventDefault();
+    event.stopPropagation();
+    contextMenu.innerHTML = '';
+
+    for (const item of items) {
+        const button = document.createElement('button');
+        button.className = 'popup-item';
+        if (item.danger) {
+            button.classList.add('danger');
+        }
+        button.type = 'button';
+        button.textContent = item.label;
+        button.disabled = !!item.disabled;
+        button.addEventListener('click', async () => {
+            hideContextMenu();
+            if (!item.disabled) {
+                await item.action();
+            }
+        });
+        contextMenu.appendChild(button);
+    }
+
+    contextMenu.classList.remove('hidden');
+    const { innerWidth, innerHeight } = window;
+    const rect = contextMenu.getBoundingClientRect();
+    contextMenu.style.left = `${Math.min(event.clientX, innerWidth - rect.width - 8)}px`;
+    contextMenu.style.top = `${Math.min(event.clientY, innerHeight - rect.height - 8)}px`;
+}
+
+function hideContextMenu() {
+    contextMenu?.classList.add('hidden');
+}
+
+function showNovelContextMenu(event: MouseEvent, novelId: string) {
+    showContextMenu(event, [
+        { label: '书籍详情', action: () => openNovelDetail(novelId) },
+        { label: '进入写作', action: () => openNovelForEditing(novelId) },
+        { label: '新建章节', action: async () => { await selectNovel(novelId); await handleCreateChapter(); } },
+        { label: '删除作品', danger: true, action: async () => { await selectNovel(novelId); await handleDeleteNovel(); } }
+    ]);
+}
+
+function showRecentChapterContextMenu(event: MouseEvent, recent: RecentChapterSummary) {
+    showContextMenu(event, [
+        { label: '进入编辑', action: () => openRecentChapter(recent) },
+        { label: '书籍详情', action: () => openNovelDetail(recent.novel_id) }
+    ]);
+}
+
+function showChapterContextMenu(event: MouseEvent, chapterId: string) {
+    const index = chapters.findIndex(chapter => chapter.id === chapterId);
+    showContextMenu(event, [
+        { label: '进入编辑', action: () => selectChapter(chapterId) },
+        { label: '上移', disabled: index <= 0, action: () => runChapterAction(chapterId, () => handleMoveChapter('up')) },
+        { label: '下移', disabled: index < 0 || index >= chapters.length - 1, action: () => runChapterAction(chapterId, () => handleMoveChapter('down')) },
+        { label: '删除章节', danger: true, action: () => runChapterAction(chapterId, handleDeleteChapter) }
+    ]);
+}
+
+function showChapterAreaContextMenu(event: MouseEvent) {
+    if ((event.target as HTMLElement).closest('.sidebar-list-item, .detail-chapter-item')) return;
+    showContextMenu(event, [
+        { label: '新建章节', disabled: !currentNovelId, action: handleCreateChapter },
+        { label: '书籍详情', disabled: !currentNovelId, action: () => { if (currentNovelId) showDetailView(); } }
+    ]);
+}
+
+function showEditorContextMenu(event: MouseEvent) {
+    showContextMenu(event, [
+        { label: '复制', action: () => { document.execCommand('copy'); } },
+        { label: '粘贴', action: pasteFromClipboard },
+        { label: '粘贴为纯文本', action: pastePlainTextFromClipboard }
+    ]);
+}
+
+async function runChapterAction(chapterId: string, action: () => Promise<unknown>) {
+    if (currentChapterId !== chapterId) {
+        const ok = await confirmDiscardIfDirty();
+        if (!ok) return;
+    }
+    currentChapterId = chapterId;
+    renderChapterList();
+    renderDetailChapterList();
+    await action();
+}
+
+async function openNovelForEditing(novelId: string) {
+    if (currentNovelId !== novelId || isDirty || novelDirty) {
+        const ok = await confirmDiscardIfDirty();
+        if (!ok) return;
+    }
+    currentLibraryCategory = 'novel';
+    currentNovelId = novelId;
+    currentChapterId = null;
+    await loadChapters(novelId);
+    renderNovelList();
+    if (chapters.length > 0) {
+        await selectChapter(chapters[0].id);
+    } else {
+        showDetailView();
+    }
+}
+
+async function openNovelDetail(novelId: string) {
+    if (currentNovelId !== novelId || isDirty || novelDirty) {
+        const ok = await confirmDiscardIfDirty();
+        if (!ok) return;
+    }
+
+    currentLibraryCategory = 'novel';
+    currentNovelId = novelId;
+    currentChapterId = null;
+    await loadChapters(novelId);
+
+    const novel = novels.find(n => n.id === novelId);
+    if (novelInfoTitle) {
+        novelInfoTitle.textContent = novel ? novel.title : '-';
+    }
+    setNovelFields(novel || null);
+    renderNovelList();
+    renderChapterList();
+    refreshDetailView();
+    showDetailView();
+}
+
+async function pasteFromClipboard() {
+    const ok = document.execCommand('paste');
+    if (!ok) {
+        await pastePlainTextFromClipboard();
+    }
+}
+
+async function pastePlainTextFromClipboard() {
+    try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+            editor.focus();
+            document.execCommand('insertText', false, text);
+        }
+    } catch (error) {
+        console.error('读取剪贴板失败:', error);
+    }
+}
 
 // ============ 导出功能 ============
 
@@ -1014,10 +1502,46 @@ function toggleExportPopup() {
 
 function openSettings() {
     settingsPage.classList.remove('hidden');
+    syncSettingsControls();
 }
 
 function closeSettings() {
     settingsPage.classList.add('hidden');
+}
+
+function syncSettingsControls() {
+    themeFamilyButtons.forEach(button => {
+        button.classList.toggle('active', button.getAttribute('data-theme-family') === currentThemeFamily);
+    });
+    themeModeButtons.forEach(button => {
+        button.classList.toggle('active', button.getAttribute('data-theme-mode') === currentThemeMode);
+    });
+    widthModeButtons.forEach(button => {
+        button.classList.toggle('active', button.getAttribute('data-width-mode') === editorWidthMode);
+    });
+    editorFontButtons.forEach(button => {
+        button.classList.toggle('active', button.getAttribute('data-editor-font') === editorFontMode);
+    });
+    applyEditorWidthValues();
+    applyFontSizeValues();
+}
+
+function setSettingsTab(tab: string) {
+    settingsNavItems.forEach(item => {
+        item.classList.toggle('active', item.getAttribute('data-settings-tab') === tab);
+    });
+    settingsPanels.forEach(panel => {
+        panel.classList.toggle('active', panel.getAttribute('data-settings-panel') === tab);
+    });
+}
+
+async function setAppearance(family: ThemeFamily, mode: ThemeMode) {
+    applyTheme(family, mode);
+    try {
+        await SetAppearance(family, mode);
+    } catch (error) {
+        console.error('保存外观配置失败:', error);
+    }
 }
 
 async function handleExportTxt() {
@@ -1167,6 +1691,59 @@ if (exportBtn) exportBtn.addEventListener('click', toggleExportPopup);
 if (importBtn) importBtn.addEventListener('click', handleImportNovel);
 if (settingsBtn) settingsBtn.addEventListener('click', openSettings);
 if (settingsCloseBtn) settingsCloseBtn.addEventListener('click', closeSettings);
+if (editorContainer) editorContainer.addEventListener('contextmenu', showEditorContextMenu);
+if (chapterList) chapterList.addEventListener('contextmenu', showChapterAreaContextMenu);
+if (detailChapterList) detailChapterList.addEventListener('contextmenu', showChapterAreaContextMenu);
+settingsNavItems.forEach(item => {
+    item.addEventListener('click', () => {
+        const tab = item.getAttribute('data-settings-tab');
+        if (tab) setSettingsTab(tab);
+    });
+});
+themeFamilyButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        const family = button.getAttribute('data-theme-family') as ThemeFamily;
+        if (family) setAppearance(family, currentThemeMode);
+    });
+});
+themeModeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        const mode = button.getAttribute('data-theme-mode') as ThemeMode;
+        if (mode) setAppearance(currentThemeFamily, mode);
+    });
+});
+widthModeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        const width = button.getAttribute('data-width-mode') as 'narrow' | 'medium' | 'wide';
+        if (width) setEditorWidthMode(width);
+    });
+});
+editorFontButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        const font = button.getAttribute('data-editor-font') as EditorFontMode;
+        if (font) setEditorFontMode(font);
+    });
+});
+[widthNarrowInput, widthMediumInput, widthWideInput].forEach(input => {
+    input?.addEventListener('change', saveEditorWidthValuesFromSettings);
+});
+[fontSizeSmallInput, fontSizeMediumInput, fontSizeLargeInput].forEach(input => {
+    input?.addEventListener('change', saveFontSizeValuesFromSettings);
+});
+document.querySelectorAll<HTMLButtonElement>('.number-stepper-btn').forEach(button => {
+    button.addEventListener('click', () => {
+        const inputId = button.getAttribute('data-step-input');
+        const delta = Number(button.getAttribute('data-step-delta') || 0);
+        const input = inputId ? document.getElementById(inputId) as HTMLInputElement | null : null;
+        if (!input || !Number.isFinite(delta)) return;
+        const current = Number(input.value || 0);
+        const min = Number(input.min || -Infinity);
+        const max = Number(input.max || Infinity);
+        const next = Math.min(max, Math.max(min, current + delta));
+        input.value = String(next);
+        input.dispatchEvent(new Event('change'));
+    });
+});
 if (newNovelBtn) newNovelBtn.addEventListener('click', handleCreateNovel);
 if (newChapterBtn) newChapterBtn.addEventListener('click', handleCreateChapter);
 if (novelSaveBtn) novelSaveBtn.addEventListener('click', handleSaveNovel);
@@ -1267,20 +1844,38 @@ async function init() {
     try {
         const config = await GetConfig();
         if (config) {
-            currentTheme = (config.theme as 'light' | 'dark') || 'light';
-            applyTheme(currentTheme);
+            const normalizedTheme = normalizeTheme(config.theme_family, config.theme_mode, config.theme);
+            applyTheme(normalizedTheme.family, normalizedTheme.mode);
 
             editorWidthMode = (config.editor_width as 'narrow' | 'medium' | 'wide') || 'medium';
-            editorContainer.classList.add(`width-${editorWidthMode}`);
+            editorWidthValues = {
+                narrow: config.editor_width_narrow || 580,
+                medium: config.editor_width_medium || 720,
+                wide: config.editor_width_wide || 980
+            };
+            editorFontMode = (config.editor_font as EditorFontMode) || 'serif';
+            applyEditorWidthValues();
+            applyEditorWidthMode();
+            applyEditorFont();
+
+            currentFontSize = (config.font_size as FontSizeMode) || 'medium';
+            fontSizeValues = {
+                small: config.font_size_small || 16,
+                medium: config.font_size_medium || 18,
+                large: config.font_size_large || 20
+            };
+            applyFontSizeValues();
+            applyFontSize();
         }
     } catch (error) {
         console.error('加载配置失败:', error);
-        applyTheme('light');
-        editorContainer.classList.add('width-medium');
+        applyTheme('notion', 'dark');
+        applyEditorWidthValues();
+        applyEditorWidthMode();
+        applyEditorFont();
+        applyFontSizeValues();
+        applyFontSize();
     }
-
-    // 默认字体大小
-    editorContainer.classList.add('font-medium');
 
     startAutoSave();
 

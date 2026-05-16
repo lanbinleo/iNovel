@@ -82,9 +82,19 @@ export function SaveWorkspace(arg1:main.Workspace):Promise<string>;
 
 export function SelectWorkspace():Promise<string>;
 
+export function SetAppearance(arg1:string,arg2:string):Promise<void>;
+
 export function SetDefaultAIProvider(arg1:string):Promise<void>;
 
+export function SetEditorFont(arg1:string):Promise<void>;
+
 export function SetEditorWidth(arg1:string):Promise<void>;
+
+export function SetEditorWidthValues(arg1:number,arg2:number,arg3:number):Promise<void>;
+
+export function SetFontSize(arg1:string):Promise<void>;
+
+export function SetFontSizeValues(arg1:number,arg2:number,arg3:number):Promise<void>;
 
 export function SetLastWorkspace(arg1:string):Promise<void>;
 

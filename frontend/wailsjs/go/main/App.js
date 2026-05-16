@@ -162,12 +162,32 @@ export function SelectWorkspace() {
   return window['go']['main']['App']['SelectWorkspace']();
 }
 
+export function SetAppearance(arg1, arg2) {
+  return window['go']['main']['App']['SetAppearance'](arg1, arg2);
+}
+
 export function SetDefaultAIProvider(arg1) {
   return window['go']['main']['App']['SetDefaultAIProvider'](arg1);
 }
 
+export function SetEditorFont(arg1) {
+  return window['go']['main']['App']['SetEditorFont'](arg1);
+}
+
 export function SetEditorWidth(arg1) {
   return window['go']['main']['App']['SetEditorWidth'](arg1);
+}
+
+export function SetEditorWidthValues(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SetEditorWidthValues'](arg1, arg2, arg3);
+}
+
+export function SetFontSize(arg1) {
+  return window['go']['main']['App']['SetFontSize'](arg1);
+}
+
+export function SetFontSizeValues(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SetFontSizeValues'](arg1, arg2, arg3);
 }
 
 export function SetLastWorkspace(arg1) {

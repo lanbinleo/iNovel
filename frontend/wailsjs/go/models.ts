@@ -79,8 +79,18 @@ export namespace main {
 	export class Config {
 	    recent_files: RecentFile[];
 	    theme: string;
+	    theme_family: string;
+	    theme_mode: string;
 	    last_workspace: string;
 	    editor_width: string;
+	    editor_width_narrow: number;
+	    editor_width_medium: number;
+	    editor_width_wide: number;
+	    editor_font: string;
+	    font_size: string;
+	    font_size_small: number;
+	    font_size_medium: number;
+	    font_size_large: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -90,8 +100,18 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.recent_files = this.convertValues(source["recent_files"], RecentFile);
 	        this.theme = source["theme"];
+	        this.theme_family = source["theme_family"];
+	        this.theme_mode = source["theme_mode"];
 	        this.last_workspace = source["last_workspace"];
 	        this.editor_width = source["editor_width"];
+	        this.editor_width_narrow = source["editor_width_narrow"];
+	        this.editor_width_medium = source["editor_width_medium"];
+	        this.editor_width_wide = source["editor_width_wide"];
+	        this.editor_font = source["editor_font"];
+	        this.font_size = source["font_size"];
+	        this.font_size_small = source["font_size_small"];
+	        this.font_size_medium = source["font_size_medium"];
+	        this.font_size_large = source["font_size_large"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -211,11 +231,11 @@ export namespace main {
 	    chapter_title: string;
 	    outline: string;
 	    updated_at: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new RecentChapterSummary(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.novel_id = source["novel_id"];
@@ -261,3 +281,4 @@ export namespace main {
 	}
 
 }
+
