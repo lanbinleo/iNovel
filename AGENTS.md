@@ -21,6 +21,19 @@
 - 不覆盖 Leo 或其他人已有的无关改动。
 - 改动保持聚焦；不要做无关重构、格式化或清理。
 
+## 发布流程
+
+- 发布前统一版本号：`VERSION`、`app.go` 中的 `Version`、前端显示版本、`frontend/package.json`、`frontend/package-lock.json`、`CHANGELOG` 等需要保持一致。
+- 每次发布都要修改 `CHANGELOG`，并检查/更新 `README.md`。文档改动需要随代码一起提交并 push。
+- 发布前读取 `.github/RELEASE_TEMPLATE.md`，release notes 使用这套固定模板；按版本内容填好 `New Features`、`Changes`、`Others`，并把下载链接中的 `$TAG` 替换为实际 tag。
+- 当前打包产物先只支持 Windows。发布前本地执行验证和打包：`npm run build`、`go test ./...`、`wails build`，确认 `build/bin/iNovel.exe` 可生成。
+- 发布准备提交后，使用本地 `gh` 命令创建 release PR，例如：`gh pr create --base main --head dev/x.x.x --title "Release x.x.x" --body-file .github/RELEASE_TEMPLATE.md`。
+- 创建 PR 后等待云端检查和编译完成。等待期间可以继续完善仓库说明类文件，例如本文件的发布流程，但不要把未确认的功能改动混进 release PR。
+- 云端通过后，用本地 `gh` 合并 PR，例如：`gh pr merge --merge`。如需保留发布线分支，不要使用会删除分支的参数。
+- PR merge 后，在最新主线提交上创建并推送 tag：`git tag -a vx.x.x -m "Release vx.x.x"`，然后 `git push origin vx.x.x`。
+- tag 推送会触发 `.github/workflows/release.yml`，云端会构建 Windows 包并创建 GitHub Release。Release 创建后检查附件、标题、模板内容和下载链接。
+- 如果需要手动发布或修正 release，优先使用本地 `gh release` 命令完成，例如 `gh release view vx.x.x`、`gh release edit vx.x.x --notes-file .github/RELEASE_TEMPLATE.md`。
+
 ## 项目概览
 
 这是一个基于 Wails v2 的 Windows 桌面小说写作器。

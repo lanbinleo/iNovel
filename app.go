@@ -18,6 +18,8 @@ import (
 // Version 应用版本号（构建时注入）
 var Version = "0.2.0"
 
+const githubRepoReleasesAPI = "https://api.github.com/repos/lanbinleo/iNovel/releases"
+
 // App struct
 type App struct {
 	ctx context.Context
@@ -1094,7 +1096,7 @@ func (a *App) CheckUpdate() (*UpdateInfo, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	// 获取所有 releases
-	resp, err := client.Get("https://api.github.com/repos/lanbinleo/iNovel/releases")
+	resp, err := client.Get(githubRepoReleasesAPI)
 	if err != nil {
 		return &UpdateInfo{
 			HasUpdate:      false,
