@@ -1,4 +1,4 @@
-## 0.2.0-alpha.1
+## 0.2.0
 
 Phase 1
 - 新增 SQLite 单库模式（~/.inovel/library.db），包含 novels/volumes/chapters/paragraphs/app_config/recent_files/ai_providers

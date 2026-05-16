@@ -16,7 +16,7 @@ import (
 )
 
 // Version 应用版本号（构建时注入）
-var Version = "0.1.0"
+var Version = "0.2.0"
 
 // App struct
 type App struct {

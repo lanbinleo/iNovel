@@ -16,10 +16,11 @@ type NovelSummary struct {
 }
 
 type ChapterSummary struct {
-	ID       string `json:"id"`
-	Title    string `json:"title"`
-	Outline  string `json:"outline"`
-	OrderKey int    `json:"order_key"`
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	Outline   string `json:"outline"`
+	OrderKey  int    `json:"order_key"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 type RecentChapterSummary struct {
@@ -161,7 +162,7 @@ func (a *App) ListChapters(novelID string) ([]ChapterSummary, error) {
 	}
 
 	rows, err := db.Query(`
-		SELECT id, title, outline, order_key
+		SELECT id, title, outline, order_key, updated_at
 		FROM chapters
 		WHERE novel_id = ?
 		ORDER BY order_key ASC;
@@ -174,7 +175,7 @@ func (a *App) ListChapters(novelID string) ([]ChapterSummary, error) {
 	var chapters []ChapterSummary
 	for rows.Next() {
 		var c ChapterSummary
-		if err := rows.Scan(&c.ID, &c.Title, &c.Outline, &c.OrderKey); err != nil {
+		if err := rows.Scan(&c.ID, &c.Title, &c.Outline, &c.OrderKey, &c.UpdatedAt); err != nil {
 			continue
 		}
 		chapters = append(chapters, c)
@@ -252,10 +253,11 @@ func (a *App) CreateChapter(novelID string, title string) (*ChapterSummary, erro
 	_, _ = db.Exec(`UPDATE novels SET updated_at = ? WHERE id = ?;`, nowStr, novelID)
 
 	return &ChapterSummary{
-		ID:       chapterID,
-		Title:    trimmed,
-		Outline:  "",
-		OrderKey: orderKey,
+		ID:        chapterID,
+		Title:     trimmed,
+		Outline:   "",
+		OrderKey:  orderKey,
+		UpdatedAt: nowStr,
 	}, nil
 }
 

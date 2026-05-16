@@ -22,6 +22,7 @@ interface ChapterSummary {
     title: string;
     outline: string;
     order_key: number;
+    updated_at: string;
 }
 
 interface RecentChapterSummary {
@@ -478,7 +479,7 @@ function renderNovelChapterLibraryList() {
 
         const meta = document.createElement('div');
         meta.className = 'library-list-meta';
-        meta.textContent = `第 ${index + 1} 章`;
+        meta.textContent = chapter.updated_at ? `更新于 ${formatDateTime(chapter.updated_at)}` : '最近更新';
 
         item.appendChild(title);
         item.appendChild(summary);

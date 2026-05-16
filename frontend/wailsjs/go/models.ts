@@ -47,6 +47,7 @@ export namespace main {
 	    title: string;
 	    outline: string;
 	    order_key: number;
+	    updated_at: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new ChapterSummary(source);
@@ -58,6 +59,7 @@ export namespace main {
 	        this.title = source["title"];
 	        this.outline = source["outline"];
 	        this.order_key = source["order_key"];
+	        this.updated_at = source["updated_at"];
 	    }
 	}
 	export class RecentFile {
