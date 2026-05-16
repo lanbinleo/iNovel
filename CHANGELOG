@@ -1,0 +1,27 @@
+## 0.2.0
+
+Phase 1
+- 新增 SQLite 单库模式（~/.inovel/library.db），包含 novels/volumes/chapters/paragraphs/app_config/recent_files/ai_providers
+- 配置与最近文件迁移到数据库（保留旧 config.json 迁移入口）
+- 新增 Markdown/TXT 导入为单章小说的后端能力
+
+Phase 2
+- 新增设置页面入口与占位内容
+- 新增小说/章节侧边栏与章节标题输入
+- 移除工作区与文件树相关 UI
+- 新增章节检视面板（大纲/信息）与导入入口
+- 章节内容与大纲保存到数据库（基于段落拆分）
+- 新增小说信息编辑（标题/简介）与删除小说/章节入口
+- 新增章节上移/下移与右侧检视栏折叠
+- （计划）章节/段落驱动编辑器与小说导航
+
+Phase 3
+- （计划）元数据 JSON 与大纲页
+
+Phase 4
+- （计划）AI 引用输入与 OpenAI/Anthropic 兼容接入、replace() 应用
+
+## 0.1.0-alpha.1
+
+- 移动了代码从 novel-writer 到 iNovel 项目
+- 重构并删除了老的项目名，使用新的工作目录和项目名称

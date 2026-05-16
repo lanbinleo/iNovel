@@ -7,7 +7,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 <div id="app">
@@ -20,8 +20,21 @@
                     <line x1="9" y1="3" x2="9" y2="21"/>
                 </svg>
             </button>
+            <button id="library-home-btn" class="icon-btn hidden" title="返回书库" style="--wails-draggable:no-drag">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M3 11.5 12 4l9 7.5"/>
+                    <path d="M5 10.5V20h14v-9.5"/>
+                </svg>
+            </button>
+            <button id="book-detail-btn" class="icon-btn hidden" title="书籍详情" style="--wails-draggable:no-drag">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M12 10v6"/>
+                    <path d="M12 7h.01"/>
+                </svg>
+            </button>
             <div class="file-info">
-                <span id="file-title" class="file-title" style="--wails-draggable:no-drag">未命名文档</span>
+                <span id="file-title" class="file-title" style="--wails-draggable:no-drag">书库</span>
                 <span id="save-status" class="save-status">·</span>
             </div>
         </div>
@@ -49,27 +62,27 @@
                     <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
                 </svg>
             </button>
-            <button id="export-btn" class="icon-btn" title="导出" style="--wails-draggable:no-drag">
+            <button id="settings-btn" class="icon-btn" title="设置" style="--wails-draggable:no-drag">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+            </button>
+            <button id="import-btn" class="icon-btn" title="导入小说" style="--wails-draggable:no-drag">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="7 10 12 15 17 10"/>
                     <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
             </button>
+            <button id="export-btn" class="icon-btn" title="导出" style="--wails-draggable:no-drag">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+            </button>
             <div class="toolbar-divider"></div>
-            <button id="new-file-btn" class="icon-btn" title="新建文档" style="--wails-draggable:no-drag">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="12" y1="18" x2="12" y2="12"/>
-                    <line x1="9" y1="15" x2="15" y2="15"/>
-                </svg>
-            </button>
-            <button id="open-file-btn" class="icon-btn" title="打开文件" style="--wails-draggable:no-drag">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                </svg>
-            </button>
             <button id="save-btn" class="icon-btn" title="保存 (Ctrl+S)" style="--wails-draggable:no-drag">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
@@ -98,70 +111,300 @@
 
     <!-- 主内容区 -->
     <div class="main-container">
-        <!-- 左侧侧边栏 -->
-        <div id="sidebar" class="sidebar">
-            <div class="workspace-selector">
-                <div class="workspace-actions">
-                    <button id="open-workspace-btn" class="workspace-action-btn" title="打开工作空间">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                        </svg>
-                    </button>
-                    <button id="save-workspace-btn" class="workspace-action-btn" title="保存工作空间">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                            <polyline points="17 21 17 13 7 13 7 21"/>
-                            <polyline points="7 3 7 8 15 8"/>
-                        </svg>
-                    </button>
-                    <button id="add-folder-btn" class="workspace-action-btn" title="添加文件夹">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                            <line x1="12" y1="11" x2="12" y2="17"/>
-                            <line x1="9" y1="14" x2="15" y2="14"/>
-                        </svg>
-                    </button>
+        <div id="library-shell" class="library-shell">
+            <div id="sidebar" class="sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-header">
+                        <span class="sidebar-header-title">书库</span>
+                        <div class="sidebar-header-actions">
+                            <button id="new-novel-btn" class="sidebar-header-btn" title="新建小说">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M12 5v14M5 12h14"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="novel-list" class="sidebar-list">
+                        <div class="sidebar-list-empty">暂无小说</div>
+                    </div>
                 </div>
-                <span id="workspace-name" class="workspace-name">未命名工作空间</span>
-            </div>
-            <div class="sidebar-header">
-                <span class="sidebar-header-title">文件</span>
-                <div class="sidebar-header-actions">
-                    <button id="new-folder-btn" class="sidebar-header-btn" title="新建文件夹">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                            <line x1="12" y1="11" x2="12" y2="17"/>
-                            <line x1="9" y1="14" x2="15" y2="14"/>
-                        </svg>
-                    </button>
-                    <button id="refresh-tree-btn" class="sidebar-header-btn" title="刷新">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <polyline points="23 4 23 10 17 10"/>
-                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-                        </svg>
-                    </button>
+                <!-- 版本信息 -->
+                <div class="sidebar-footer">
+                    <a id="version-link" class="version-info" href="#" title="访问 GitHub">
+                        <span id="version-text">v0.2.0</span>
+                        <span id="update-badge" class="update-badge hidden">(New Version)</span>
+                        <span id="copy-right"> | iNovel By Lanbinleo</span>
+                    </a>
                 </div>
             </div>
-            <div id="file-tree" class="file-tree">
-                <!-- 文件树将在这里动态生成 -->
-            </div>
-            <!-- 版本信息 -->
-            <div class="sidebar-footer">
-                <a id="version-link" class="version-info" href="#" title="访问 GitHub">
-                    <span id="version-text">v1.0.0</span>
-                    <span id="update-badge" class="update-badge hidden">(New Version)</span>
-                    <span id="copy-right"> | iNovel By Lanbinleo</span>
-                </a>
+
+            <div id="library-view" class="library-view">
+                <div class="library-header">
+                    <div>
+                        <div id="library-title" class="library-title">Recent</div>
+                        <div id="library-subtitle" class="library-subtitle">最近更新的小说</div>
+                    </div>
+                </div>
+                <div id="library-list" class="library-list">
+                    <div class="library-empty">还没有小说。可以从左侧新建，或从工具栏导入。</div>
+                </div>
             </div>
         </div>
 
-        <!-- 编辑区 -->
-        <div class="editor-container">
-            <div
-                id="editor"
-                class="editor"
-                data-placeholder="开始写作..."
-            ></div>
+        <div id="writing-view" class="writing-view hidden">
+            <div id="chapter-sidebar" class="chapter-sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-header">
+                        <span class="sidebar-header-title">章节</span>
+                        <div class="sidebar-header-actions">
+                            <button id="new-chapter-btn" class="sidebar-header-btn" title="新建章节">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M12 5v14M5 12h14"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="chapter-list" class="sidebar-list">
+                        <div class="sidebar-list-empty">暂无章节</div>
+                    </div>
+                </div>
+                <div class="sidebar-footer">
+                    <a class="version-info" href="#" title="访问 GitHub">
+                        <span>iNovel By Lanbinleo</span>
+                    </a>
+                </div>
+            </div>
+            <!-- 编辑区 -->
+            <div id="editor-view" class="editor-container">
+                <div class="chapter-header">
+                    <input id="chapter-title-input" class="chapter-title-input" type="text" placeholder="请选择章节" disabled />
+                </div>
+                <div
+                    id="editor"
+                    class="editor"
+                    data-placeholder="开始写作..."
+                ></div>
+            </div>
+        </div>
+        <div id="detail-view" class="detail-view hidden">
+            <div class="detail-header">
+                <div>
+                    <div class="detail-title">书籍详情</div>
+                    <div id="novel-info-title" class="detail-subtitle">-</div>
+                </div>
+            </div>
+            <div class="detail-body">
+                <section class="detail-section">
+                    <div class="detail-section-title">作品</div>
+                    <label class="detail-field">
+                        <span>标题</span>
+                        <input id="novel-title-input" class="detail-input" type="text" placeholder="请输入小说标题" disabled />
+                    </label>
+                    <label class="detail-field">
+                        <span>简介</span>
+                        <textarea id="novel-summary-input" class="detail-textarea" placeholder="为作品写一段简介..." disabled></textarea>
+                    </label>
+                    <div class="detail-actions">
+                        <button id="novel-save-btn" class="detail-btn primary" disabled>保存作品</button>
+                        <button id="novel-delete-btn" class="detail-btn danger" disabled>删除作品</button>
+                    </div>
+                </section>
+                <section class="detail-section">
+                    <div class="detail-section-title">当前章节</div>
+                    <div class="detail-row">
+                        <span>小说</span>
+                        <span id="detail-chapter-novel">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>章节</span>
+                        <span id="chapter-info-title">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>章节数</span>
+                        <span id="detail-chapter-count">0</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>字数</span>
+                        <span id="chapter-info-words">0</span>
+                    </div>
+                    <label class="detail-field">
+                        <span>大纲</span>
+                        <textarea id="chapter-outline-input" class="detail-textarea" placeholder="为本章节写一段梗概..." disabled></textarea>
+                    </label>
+                    <div class="detail-actions">
+                        <button id="chapter-move-up-btn" class="detail-btn" disabled>上移</button>
+                        <button id="chapter-move-down-btn" class="detail-btn" disabled>下移</button>
+                        <button id="chapter-delete-btn" class="detail-btn danger" disabled>删除章节</button>
+                    </div>
+                </section>
+                <section class="detail-section detail-section-wide">
+                    <div class="detail-section-title">章节排序</div>
+                    <div id="detail-chapter-list" class="detail-chapter-list">
+                        <div class="sidebar-list-empty">请选择小说</div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置页面 -->
+    <div id="settings-page" class="settings-page hidden">
+        <div class="settings-panel">
+            <div class="settings-header">
+                <div>
+                    <div class="settings-title">设置</div>
+                    <div class="settings-subtitle">调整写作界面的显示方式</div>
+                </div>
+                <button id="settings-close-btn" class="icon-btn settings-close-btn" title="关闭">
+                    <svg width="14" height="14" viewBox="0 0 12 12">
+                        <path d="M1 1L11 11M11 1L1 11" stroke="currentColor" stroke-width="1.2"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="settings-body">
+                <nav class="settings-nav" aria-label="设置分类">
+                    <button class="settings-nav-item active" data-settings-tab="appearance">外观</button>
+                    <button class="settings-nav-item" data-settings-tab="editor">编辑器</button>
+                </nav>
+                <div class="settings-content">
+                    <section class="settings-section active" data-settings-panel="appearance">
+                        <div class="settings-section-heading">
+                            <div class="settings-section-title">外观</div>
+                            <div class="settings-section-desc">选择界面主题和日夜模式。</div>
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label">主题</label>
+                            <div class="theme-grid">
+                                <button class="theme-choice" data-theme-family="notion">
+                                    <span class="theme-choice-swatch theme-notion"></span>
+                                    <span>
+                                        <span class="theme-choice-name">Notion</span>
+                                        <span class="theme-choice-desc">黑白灰为主，紫色强调</span>
+                                    </span>
+                                </button>
+                                <button class="theme-choice" data-theme-family="warm">
+                                    <span class="theme-choice-swatch theme-warm"></span>
+                                    <span>
+                                        <span class="theme-choice-name">Warm</span>
+                                        <span class="theme-choice-desc">柔和暖色，适合长写作</span>
+                                    </span>
+                                </button>
+                                <button class="theme-choice" data-theme-family="paper">
+                                    <span class="theme-choice-swatch theme-paper"></span>
+                                    <span>
+                                        <span class="theme-choice-name">Paper</span>
+                                        <span class="theme-choice-desc">纸张感，但保持平面</span>
+                                    </span>
+                                </button>
+                                <button class="theme-choice" data-theme-family="ink">
+                                    <span class="theme-choice-swatch theme-ink"></span>
+                                    <span>
+                                        <span class="theme-choice-name">Ink</span>
+                                        <span class="theme-choice-desc">更高对比度的写作环境</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label">模式</label>
+                            <div class="segmented-control">
+                                <button class="segmented-option" data-theme-mode="light">日间</button>
+                                <button class="segmented-option" data-theme-mode="dark">夜间</button>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="settings-section" data-settings-panel="editor">
+                        <div class="settings-section-heading">
+                            <div class="settings-section-title">编辑器</div>
+                            <div class="settings-section-desc">设置正文宽度和字号档位。</div>
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label">正文宽度</label>
+                            <div class="settings-control-stack">
+                                <div class="segmented-control">
+                                    <button class="segmented-option" data-width-mode="narrow">窄</button>
+                                    <button class="segmented-option" data-width-mode="medium">中</button>
+                                    <button class="segmented-option" data-width-mode="wide">宽</button>
+                                </div>
+                                <div class="font-size-settings">
+                                    <label class="font-size-setting">
+                                        <span>窄</span>
+                                        <span class="number-stepper">
+                                            <input id="width-narrow-input" class="settings-number-input" type="number" min="420" max="900" step="10">
+                                            <span class="number-stepper-actions">
+                                                <button type="button" class="number-stepper-btn" data-step-input="width-narrow-input" data-step-delta="10">+</button>
+                                                <button type="button" class="number-stepper-btn" data-step-input="width-narrow-input" data-step-delta="-10">−</button>
+                                            </span>
+                                        </span>
+                                    </label>
+                                    <label class="font-size-setting">
+                                        <span>中</span>
+                                        <span class="number-stepper">
+                                            <input id="width-medium-input" class="settings-number-input" type="number" min="520" max="1100" step="10">
+                                            <span class="number-stepper-actions">
+                                                <button type="button" class="number-stepper-btn" data-step-input="width-medium-input" data-step-delta="10">+</button>
+                                                <button type="button" class="number-stepper-btn" data-step-input="width-medium-input" data-step-delta="-10">−</button>
+                                            </span>
+                                        </span>
+                                    </label>
+                                    <label class="font-size-setting">
+                                        <span>宽</span>
+                                        <span class="number-stepper">
+                                            <input id="width-wide-input" class="settings-number-input" type="number" min="620" max="1400" step="10">
+                                            <span class="number-stepper-actions">
+                                                <button type="button" class="number-stepper-btn" data-step-input="width-wide-input" data-step-delta="10">+</button>
+                                                <button type="button" class="number-stepper-btn" data-step-input="width-wide-input" data-step-delta="-10">−</button>
+                                            </span>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label">正文字体</label>
+                            <div class="segmented-control">
+                                <button class="segmented-option" data-editor-font="serif">有衬线</button>
+                                <button class="segmented-option" data-editor-font="sans">无衬线</button>
+                            </div>
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label">字号档位</label>
+                            <div class="font-size-settings">
+                                <label class="font-size-setting">
+                                    <span>小</span>
+                                    <span class="number-stepper">
+                                        <input id="font-size-small-input" class="settings-number-input" type="number" min="12" max="30" step="1">
+                                        <span class="number-stepper-actions">
+                                            <button type="button" class="number-stepper-btn" data-step-input="font-size-small-input" data-step-delta="1">+</button>
+                                            <button type="button" class="number-stepper-btn" data-step-input="font-size-small-input" data-step-delta="-1">−</button>
+                                        </span>
+                                    </span>
+                                </label>
+                                <label class="font-size-setting">
+                                    <span>中</span>
+                                    <span class="number-stepper">
+                                        <input id="font-size-medium-input" class="settings-number-input" type="number" min="12" max="32" step="1">
+                                        <span class="number-stepper-actions">
+                                            <button type="button" class="number-stepper-btn" data-step-input="font-size-medium-input" data-step-delta="1">+</button>
+                                            <button type="button" class="number-stepper-btn" data-step-input="font-size-medium-input" data-step-delta="-1">−</button>
+                                        </span>
+                                    </span>
+                                </label>
+                                <label class="font-size-setting">
+                                    <span>大</span>
+                                    <span class="number-stepper">
+                                        <input id="font-size-large-input" class="settings-number-input" type="number" min="14" max="36" step="1">
+                                        <span class="number-stepper-actions">
+                                            <button type="button" class="number-stepper-btn" data-step-input="font-size-large-input" data-step-delta="1">+</button>
+                                            <button type="button" class="number-stepper-btn" data-step-input="font-size-large-input" data-step-delta="-1">−</button>
+                                        </span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -191,6 +434,8 @@
         导出为长图
     </button>
 </div>
+
+<div id="context-menu" class="popup context-menu hidden"></div>
 
 <script src="./src/main.ts" type="module"></script>
 </body>

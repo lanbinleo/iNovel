@@ -6,13 +6,12 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
+    background-color: rgba(0, 0, 0, 0.42);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2000;
-    animation: fadeIn 0.15s ease;
+    animation: fadeIn var(--duration-fast) ease;
 }
 
 .modal-overlay.hidden {
@@ -25,13 +24,13 @@
 }
 
 .modal {
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-modal);
     min-width: 320px;
     max-width: 400px;
-    animation: slideIn 0.2s ease;
+    animation: slideIn var(--duration-base) ease;
 }
 
 @keyframes slideIn {
@@ -71,16 +70,18 @@
     padding: 10px 14px;
     font-size: 14px;
     color: var(--text-primary);
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-md);
     outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color var(--duration-fast) ease,
+        box-shadow var(--duration-fast) ease;
 }
 
 .modal-input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(166, 139, 111, 0.15);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .modal-input::placeholder {
@@ -100,7 +101,9 @@
     font-weight: 500;
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition:
+        background-color var(--duration-fast) ease,
+        color var(--duration-fast) ease;
     border: none;
 }
 
@@ -124,7 +127,7 @@
 }
 
 .modal-btn:active {
-    transform: scale(0.98);
+    opacity: 0.9;
 }
 
 /* ============ 导出预览模态框 ============ */
@@ -135,13 +138,12 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
+    background-color: rgba(0, 0, 0, 0.48);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2000;
-    animation: fadeIn 0.15s ease;
+    animation: fadeIn var(--duration-fast) ease;
 }
 
 .export-preview-overlay.hidden {
@@ -149,17 +151,17 @@
 }
 
 .export-preview-modal {
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-modal);
     width: 90vw;
     max-width: 900px;
     height: 85vh;
     max-height: 700px;
     display: flex;
     flex-direction: column;
-    animation: slideIn 0.2s ease;
+    animation: slideIn var(--duration-base) ease;
 }
 
 .export-preview-header {
@@ -188,7 +190,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
+    transition:
+        background-color var(--duration-fast) ease,
+        color var(--duration-fast) ease;
 }
 
 .export-preview-close:hover {
@@ -240,7 +244,10 @@
     color: var(--text-secondary);
     cursor: pointer;
     border-radius: calc(var(--radius-md) - 2px);
-    transition: all 0.15s ease;
+    transition:
+        background-color var(--duration-fast) ease,
+        color var(--duration-fast) ease,
+        box-shadow var(--duration-fast) ease;
 }
 
 .export-option-btn:hover {
@@ -275,7 +282,10 @@
     padding: 40px 30px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     border-radius: 4px;
-    transition: width 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+    transition:
+        width var(--duration-base) ease,
+        background-color var(--duration-base) ease,
+        color var(--duration-base) ease;
     margin: 0 auto;
     max-width: calc(100% - 40px);
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -15,11 +16,14 @@ import (
 )
 
 // Version 应用版本号（构建时注入）
-var Version = "0.1.0"
+var Version = "0.2.0"
+
+const githubRepoReleasesAPI = "https://api.github.com/repos/lanbinleo/iNovel/releases"
 
 // App struct
 type App struct {
 	ctx context.Context
+	db  *sql.DB
 }
 
 // FileInfo 文件信息
@@ -31,17 +35,27 @@ type FileInfo struct {
 
 // RecentFile 最近文件记录
 type RecentFile struct {
-	Path      string    `json:"path"`
-	Title     string    `json:"title"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Path      string `json:"path"`
+	Title     string `json:"title"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 // Config 配置文件
 type Config struct {
-	RecentFiles   []RecentFile `json:"recent_files"`
-	Theme         string       `json:"theme"`          // "light" 或 "dark"
-	LastWorkspace string       `json:"last_workspace"` // 最近打开的工作空间路径
-	EditorWidth   string       `json:"editor_width"`   // "narrow", "medium", "wide"
+	RecentFiles       []RecentFile `json:"recent_files"`
+	Theme             string       `json:"theme"`          // "notion-dark", "warm-light" 等
+	ThemeFamily       string       `json:"theme_family"`   // "notion", "warm", "paper", "ink"
+	ThemeMode         string       `json:"theme_mode"`     // "light" 或 "dark"
+	LastWorkspace     string       `json:"last_workspace"` // 最近打开的工作空间路径
+	EditorWidth       string       `json:"editor_width"`   // "narrow", "medium", "wide"
+	EditorWidthNarrow int          `json:"editor_width_narrow"`
+	EditorWidthMedium int          `json:"editor_width_medium"`
+	EditorWidthWide   int          `json:"editor_width_wide"`
+	EditorFont        string       `json:"editor_font"` // "serif" 或 "sans"
+	FontSize          string       `json:"font_size"`   // "small", "medium", "large"
+	FontSizeSmall     int          `json:"font_size_small"`
+	FontSizeMedium    int          `json:"font_size_medium"`
+	FontSizeLarge     int          `json:"font_size_large"`
 }
 
 // NewApp creates a new App application struct
@@ -53,6 +67,9 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	if err := a.initDatabase(); err != nil {
+		runtime.LogError(a.ctx, "db init failed: "+err.Error())
+	}
 }
 
 // beforeClose is called when the window is about to close
@@ -64,37 +81,176 @@ func (a *App) beforeClose(ctx context.Context) bool {
 
 // getConfigPath 获取配置文件路径
 func (a *App) getConfigPath() (string, error) {
-	homeDir, err := os.UserHomeDir()
+	dataDir, err := getDataDir()
 	if err != nil {
 		return "", err
 	}
+	return filepath.Join(dataDir, "config.json"), nil
+}
 
-	configDir := filepath.Join(homeDir, ".inovel")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return "", err
+func splitTheme(theme string) (string, string) {
+	theme = strings.TrimSpace(theme)
+	if theme == "" {
+		return "notion", "dark"
 	}
+	if theme == "light" {
+		return "notion", "light"
+	}
+	if theme == "dark" {
+		return "notion", "dark"
+	}
+	parts := strings.Split(theme, "-")
+	if len(parts) >= 2 {
+		family := strings.Join(parts[:len(parts)-1], "-")
+		mode := parts[len(parts)-1]
+		if family != "" && (mode == "light" || mode == "dark") {
+			return family, mode
+		}
+	}
+	return "notion", "dark"
+}
 
-	return filepath.Join(configDir, "config.json"), nil
+func normalizeConfig(config *Config) {
+	if config.RecentFiles == nil {
+		config.RecentFiles = []RecentFile{}
+	}
+	if config.ThemeFamily == "" || config.ThemeMode == "" {
+		family, mode := splitTheme(config.Theme)
+		if config.ThemeFamily == "" {
+			config.ThemeFamily = family
+		}
+		if config.ThemeMode == "" {
+			config.ThemeMode = mode
+		}
+	}
+	if config.ThemeMode != "light" && config.ThemeMode != "dark" {
+		config.ThemeMode = "dark"
+	}
+	switch config.ThemeFamily {
+	case "notion", "warm", "paper", "ink":
+	default:
+		config.ThemeFamily = "notion"
+	}
+	config.Theme = config.ThemeFamily + "-" + config.ThemeMode
+	if config.EditorWidth == "" {
+		config.EditorWidth = "medium"
+	}
+	if config.EditorWidthNarrow <= 0 {
+		config.EditorWidthNarrow = 580
+	}
+	if config.EditorWidthMedium <= 0 {
+		config.EditorWidthMedium = 720
+	}
+	if config.EditorWidthWide <= 0 {
+		config.EditorWidthWide = 980
+	}
+	if config.EditorFont != "sans" && config.EditorFont != "serif" {
+		config.EditorFont = "serif"
+	}
+	if config.FontSize == "" {
+		config.FontSize = "medium"
+	}
+	if config.FontSizeSmall <= 0 {
+		config.FontSizeSmall = 16
+	}
+	if config.FontSizeMedium <= 0 {
+		config.FontSizeMedium = 18
+	}
+	if config.FontSizeLarge <= 0 {
+		config.FontSizeLarge = 20
+	}
 }
 
 // loadConfig 加载配置
 func (a *App) loadConfig() (*Config, error) {
-	configPath, err := a.getConfigPath()
+	db, err := a.ensureDB()
 	if err != nil {
 		return &Config{RecentFiles: []RecentFile{}}, nil
 	}
 
-	data, err := os.ReadFile(configPath)
+	config := Config{RecentFiles: []RecentFile{}}
+
+	var theme sql.NullString
+	var themeFamily sql.NullString
+	var themeMode sql.NullString
+	var editorWidth sql.NullString
+	var editorWidthNarrow sql.NullInt64
+	var editorWidthMedium sql.NullInt64
+	var editorWidthWide sql.NullInt64
+	var editorFont sql.NullString
+	var fontSize sql.NullString
+	var fontSizeSmall sql.NullInt64
+	var fontSizeMedium sql.NullInt64
+	var fontSizeLarge sql.NullInt64
+	var lastWorkspace sql.NullString
+
+	err = db.QueryRow(`SELECT theme, theme_family, theme_mode, editor_width, editor_width_narrow, editor_width_medium, editor_width_wide, editor_font, font_size, font_size_small, font_size_medium, font_size_large, last_workspace FROM app_config WHERE id = 1;`).Scan(&theme, &themeFamily, &themeMode, &editorWidth, &editorWidthNarrow, &editorWidthMedium, &editorWidthWide, &editorFont, &fontSize, &fontSizeSmall, &fontSizeMedium, &fontSizeLarge, &lastWorkspace)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if err == sql.ErrNoRows {
+			_, _ = db.Exec(`INSERT OR IGNORE INTO app_config (id, theme, theme_family, theme_mode, editor_width, editor_width_narrow, editor_width_medium, editor_width_wide, editor_font, font_size, font_size_small, font_size_medium, font_size_large, last_workspace) VALUES (1, 'notion-dark', 'notion', 'dark', 'medium', 580, 720, 980, 'serif', 'medium', 16, 18, 20, '');`)
+			config.Theme = "notion-dark"
+			config.ThemeFamily = "notion"
+			config.ThemeMode = "dark"
+			config.EditorWidth = "medium"
+			config.EditorWidthNarrow = 580
+			config.EditorWidthMedium = 720
+			config.EditorWidthWide = 980
+			config.EditorFont = "serif"
+			config.FontSize = "medium"
+			config.FontSizeSmall = 16
+			config.FontSizeMedium = 18
+			config.FontSizeLarge = 20
+			config.LastWorkspace = ""
+		} else {
 			return &Config{RecentFiles: []RecentFile{}}, nil
 		}
-		return nil, err
+	} else {
+		config.Theme = theme.String
+		config.ThemeFamily = themeFamily.String
+		config.ThemeMode = themeMode.String
+		config.EditorWidth = editorWidth.String
+		if editorWidthNarrow.Valid {
+			config.EditorWidthNarrow = int(editorWidthNarrow.Int64)
+		}
+		if editorWidthMedium.Valid {
+			config.EditorWidthMedium = int(editorWidthMedium.Int64)
+		}
+		if editorWidthWide.Valid {
+			config.EditorWidthWide = int(editorWidthWide.Int64)
+		}
+		config.EditorFont = editorFont.String
+		config.FontSize = fontSize.String
+		if fontSizeSmall.Valid {
+			config.FontSizeSmall = int(fontSizeSmall.Int64)
+		}
+		if fontSizeMedium.Valid {
+			config.FontSizeMedium = int(fontSizeMedium.Int64)
+		}
+		if fontSizeLarge.Valid {
+			config.FontSizeLarge = int(fontSizeLarge.Int64)
+		}
+		config.LastWorkspace = lastWorkspace.String
 	}
+	normalizeConfig(&config)
 
-	var config Config
-	if err := json.Unmarshal(data, &config); err != nil {
-		return &Config{RecentFiles: []RecentFile{}}, nil
+	rows, err := db.Query(`SELECT path, title, updated_at FROM recent_files ORDER BY updated_at DESC LIMIT 10;`)
+	if err != nil {
+		return &config, nil
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var path string
+		var title string
+		var updatedAtStr string
+		if err := rows.Scan(&path, &title, &updatedAtStr); err != nil {
+			continue
+		}
+		config.RecentFiles = append(config.RecentFiles, RecentFile{
+			Path:      path,
+			Title:     title,
+			UpdatedAt: updatedAtStr,
+		})
 	}
 
 	return &config, nil
@@ -102,50 +258,72 @@ func (a *App) loadConfig() (*Config, error) {
 
 // saveConfig 保存配置
 func (a *App) saveConfig(config *Config) error {
-	configPath, err := a.getConfigPath()
+	db, err := a.ensureDB()
 	if err != nil {
 		return err
 	}
-
-	data, err := json.Marshal(config)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(configPath, data, 0644)
+	normalizeConfig(config)
+	_, err = db.Exec(
+		`INSERT INTO app_config (id, theme, theme_family, theme_mode, editor_width, editor_width_narrow, editor_width_medium, editor_width_wide, editor_font, font_size, font_size_small, font_size_medium, font_size_large, last_workspace)
+		 VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		 ON CONFLICT(id) DO UPDATE SET
+		 theme = excluded.theme,
+		 theme_family = excluded.theme_family,
+		 theme_mode = excluded.theme_mode,
+		 editor_width = excluded.editor_width,
+		 editor_width_narrow = excluded.editor_width_narrow,
+		 editor_width_medium = excluded.editor_width_medium,
+		 editor_width_wide = excluded.editor_width_wide,
+		 editor_font = excluded.editor_font,
+		 font_size = excluded.font_size,
+		 font_size_small = excluded.font_size_small,
+		 font_size_medium = excluded.font_size_medium,
+		 font_size_large = excluded.font_size_large,
+		 last_workspace = excluded.last_workspace;`,
+		config.Theme, config.ThemeFamily, config.ThemeMode, config.EditorWidth, config.EditorWidthNarrow, config.EditorWidthMedium, config.EditorWidthWide, config.EditorFont, config.FontSize, config.FontSizeSmall, config.FontSizeMedium, config.FontSizeLarge, config.LastWorkspace,
+	)
+	return err
 }
 
 // addToRecentFiles 添加到最近文件列表
 func (a *App) addToRecentFiles(path string, title string) error {
-	config, err := a.loadConfig()
+	db, err := a.ensureDB()
 	if err != nil {
 		return err
 	}
 
-	// 移除重复项
-	var newRecentFiles []RecentFile
-	for _, rf := range config.RecentFiles {
-		if rf.Path != path {
-			newRecentFiles = append(newRecentFiles, rf)
-		}
+	tx, err := db.Begin()
+	if err != nil {
+		return err
 	}
 
-	// 添加到开头
-	newRecentFiles = append([]RecentFile{
-		{
-			Path:      path,
-			Title:     title,
-			UpdatedAt: time.Now(),
-		},
-	}, newRecentFiles...)
-
-	// 只保留最近10个
-	if len(newRecentFiles) > 10 {
-		newRecentFiles = newRecentFiles[:10]
+	_, err = tx.Exec(`DELETE FROM recent_files WHERE path = ?;`, path)
+	if err != nil {
+		tx.Rollback()
+		return err
 	}
 
-	config.RecentFiles = newRecentFiles
-	return a.saveConfig(config)
+	_, err = tx.Exec(
+		`INSERT INTO recent_files (path, title, updated_at) VALUES (?, ?, ?);`,
+		path, title, time.Now().UTC().Format(time.RFC3339),
+	)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	_, err = tx.Exec(`
+		DELETE FROM recent_files
+		WHERE path NOT IN (
+			SELECT path FROM recent_files ORDER BY updated_at DESC LIMIT 10
+		);
+	`)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }
 
 // NewFile 创建新文件
@@ -275,22 +453,32 @@ func (a *App) SaveFile(path string, content string) (string, error) {
 
 // GetRecentFiles 获取最近文件列表
 func (a *App) GetRecentFiles() ([]FileInfo, error) {
-	config, err := a.loadConfig()
+	db, err := a.ensureDB()
 	if err != nil {
 		return []FileInfo{}, nil
 	}
 
+	rows, err := db.Query(`SELECT path, title, updated_at FROM recent_files ORDER BY updated_at DESC LIMIT 10;`)
+	if err != nil {
+		return []FileInfo{}, nil
+	}
+	defer rows.Close()
+
 	var files []FileInfo
-	for _, rf := range config.RecentFiles {
-		// 检查文件是否存在
-		if _, err := os.Stat(rf.Path); os.IsNotExist(err) {
+	for rows.Next() {
+		var path string
+		var title string
+		var updatedAtStr string
+		if err := rows.Scan(&path, &title, &updatedAtStr); err != nil {
 			continue
 		}
-
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			continue
+		}
 		files = append(files, FileInfo{
-			Path:    rf.Path,
-			Title:   rf.Title,
-			Content: "", // 不加载内容，只在用户点击时加载
+			Path:    path,
+			Title:   title,
+			Content: "",
 		})
 	}
 
@@ -368,18 +556,22 @@ func (a *App) GetConfig() (*Config, error) {
 	config, err := a.loadConfig()
 	if err != nil {
 		return &Config{
-			RecentFiles: []RecentFile{},
-			Theme:       "light",
-			EditorWidth: "medium",
+			RecentFiles:       []RecentFile{},
+			Theme:             "notion-dark",
+			ThemeFamily:       "notion",
+			ThemeMode:         "dark",
+			EditorWidth:       "medium",
+			EditorWidthNarrow: 580,
+			EditorWidthMedium: 720,
+			EditorWidthWide:   980,
+			EditorFont:        "serif",
+			FontSize:          "medium",
+			FontSizeSmall:     16,
+			FontSizeMedium:    18,
+			FontSizeLarge:     20,
 		}, nil
 	}
-	// 设置默认值
-	if config.Theme == "" {
-		config.Theme = "light"
-	}
-	if config.EditorWidth == "" {
-		config.EditorWidth = "medium"
-	}
+	normalizeConfig(config)
 	return config, nil
 }
 
@@ -389,7 +581,21 @@ func (a *App) SetTheme(theme string) error {
 	if err != nil {
 		config = &Config{RecentFiles: []RecentFile{}}
 	}
+	family, mode := splitTheme(theme)
 	config.Theme = theme
+	config.ThemeFamily = family
+	config.ThemeMode = mode
+	return a.saveConfig(config)
+}
+
+// SetAppearance 设置主题家族和日夜模式
+func (a *App) SetAppearance(themeFamily string, themeMode string) error {
+	config, err := a.loadConfig()
+	if err != nil {
+		config = &Config{RecentFiles: []RecentFile{}}
+	}
+	config.ThemeFamily = themeFamily
+	config.ThemeMode = themeMode
 	return a.saveConfig(config)
 }
 
@@ -400,6 +606,50 @@ func (a *App) SetEditorWidth(width string) error {
 		config = &Config{RecentFiles: []RecentFile{}}
 	}
 	config.EditorWidth = width
+	return a.saveConfig(config)
+}
+
+// SetEditorWidthValues 设置宽度档位对应的宽度
+func (a *App) SetEditorWidthValues(narrow int, medium int, wide int) error {
+	config, err := a.loadConfig()
+	if err != nil {
+		config = &Config{RecentFiles: []RecentFile{}}
+	}
+	config.EditorWidthNarrow = narrow
+	config.EditorWidthMedium = medium
+	config.EditorWidthWide = wide
+	return a.saveConfig(config)
+}
+
+// SetEditorFont 设置编辑器正文字体
+func (a *App) SetEditorFont(font string) error {
+	config, err := a.loadConfig()
+	if err != nil {
+		config = &Config{RecentFiles: []RecentFile{}}
+	}
+	config.EditorFont = font
+	return a.saveConfig(config)
+}
+
+// SetFontSize 设置当前字号档位
+func (a *App) SetFontSize(size string) error {
+	config, err := a.loadConfig()
+	if err != nil {
+		config = &Config{RecentFiles: []RecentFile{}}
+	}
+	config.FontSize = size
+	return a.saveConfig(config)
+}
+
+// SetFontSizeValues 设置字号档位对应的字号
+func (a *App) SetFontSizeValues(small int, medium int, large int) error {
+	config, err := a.loadConfig()
+	if err != nil {
+		config = &Config{RecentFiles: []RecentFile{}}
+	}
+	config.FontSizeSmall = small
+	config.FontSizeMedium = medium
+	config.FontSizeLarge = large
 	return a.saveConfig(config)
 }
 
@@ -846,7 +1096,7 @@ func (a *App) CheckUpdate() (*UpdateInfo, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	// 获取所有 releases
-	resp, err := client.Get("https://api.github.com/repos/lanbinleo/iNovel/releases")
+	resp, err := client.Get(githubRepoReleasesAPI)
 	if err != nil {
 		return &UpdateInfo{
 			HasUpdate:      false,

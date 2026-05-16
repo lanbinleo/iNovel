@@ -10,6 +10,10 @@ export function CheckUpdate() {
   return window['go']['main']['App']['CheckUpdate']();
 }
 
+export function CreateChapter(arg1, arg2) {
+  return window['go']['main']['App']['CreateChapter'](arg1, arg2);
+}
+
 export function CreateFile(arg1, arg2) {
   return window['go']['main']['App']['CreateFile'](arg1, arg2);
 }
@@ -18,8 +22,24 @@ export function CreateFolder(arg1, arg2) {
   return window['go']['main']['App']['CreateFolder'](arg1, arg2);
 }
 
+export function CreateNovel(arg1) {
+  return window['go']['main']['App']['CreateNovel'](arg1);
+}
+
+export function DeleteAIProvider(arg1) {
+  return window['go']['main']['App']['DeleteAIProvider'](arg1);
+}
+
+export function DeleteChapter(arg1) {
+  return window['go']['main']['App']['DeleteChapter'](arg1);
+}
+
 export function DeleteFile(arg1) {
   return window['go']['main']['App']['DeleteFile'](arg1);
+}
+
+export function DeleteNovel(arg1) {
+  return window['go']['main']['App']['DeleteNovel'](arg1);
 }
 
 export function ExportAsImagePath() {
@@ -34,8 +54,16 @@ export function ExportAsTxt(arg1) {
   return window['go']['main']['App']['ExportAsTxt'](arg1);
 }
 
+export function GetChapterContent(arg1) {
+  return window['go']['main']['App']['GetChapterContent'](arg1);
+}
+
 export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
+}
+
+export function GetDefaultAIProvider() {
+  return window['go']['main']['App']['GetDefaultAIProvider']();
 }
 
 export function GetFileTree(arg1) {
@@ -54,12 +82,40 @@ export function GetVersion() {
   return window['go']['main']['App']['GetVersion']();
 }
 
+export function ImportNovelFromDialog() {
+  return window['go']['main']['App']['ImportNovelFromDialog']();
+}
+
+export function ImportNovelFromPath(arg1) {
+  return window['go']['main']['App']['ImportNovelFromPath'](arg1);
+}
+
+export function ListAIProviders() {
+  return window['go']['main']['App']['ListAIProviders']();
+}
+
+export function ListChapters(arg1) {
+  return window['go']['main']['App']['ListChapters'](arg1);
+}
+
+export function ListNovels() {
+  return window['go']['main']['App']['ListNovels']();
+}
+
+export function ListRecentChapters() {
+  return window['go']['main']['App']['ListRecentChapters']();
+}
+
 export function LoadFileContent(arg1) {
   return window['go']['main']['App']['LoadFileContent'](arg1);
 }
 
 export function LoadWorkspaceFile(arg1) {
   return window['go']['main']['App']['LoadWorkspaceFile'](arg1);
+}
+
+export function MoveChapter(arg1, arg2) {
+  return window['go']['main']['App']['MoveChapter'](arg1, arg2);
 }
 
 export function MoveFile(arg1, arg2) {
@@ -86,6 +142,10 @@ export function RenameFile(arg1, arg2) {
   return window['go']['main']['App']['RenameFile'](arg1, arg2);
 }
 
+export function SaveChapterContent(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['SaveChapterContent'](arg1, arg2, arg3, arg4);
+}
+
 export function SaveFile(arg1, arg2) {
   return window['go']['main']['App']['SaveFile'](arg1, arg2);
 }
@@ -102,8 +162,32 @@ export function SelectWorkspace() {
   return window['go']['main']['App']['SelectWorkspace']();
 }
 
+export function SetAppearance(arg1, arg2) {
+  return window['go']['main']['App']['SetAppearance'](arg1, arg2);
+}
+
+export function SetDefaultAIProvider(arg1) {
+  return window['go']['main']['App']['SetDefaultAIProvider'](arg1);
+}
+
+export function SetEditorFont(arg1) {
+  return window['go']['main']['App']['SetEditorFont'](arg1);
+}
+
 export function SetEditorWidth(arg1) {
   return window['go']['main']['App']['SetEditorWidth'](arg1);
+}
+
+export function SetEditorWidthValues(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SetEditorWidthValues'](arg1, arg2, arg3);
+}
+
+export function SetFontSize(arg1) {
+  return window['go']['main']['App']['SetFontSize'](arg1);
+}
+
+export function SetFontSizeValues(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SetFontSizeValues'](arg1, arg2, arg3);
 }
 
 export function SetLastWorkspace(arg1) {
@@ -112,6 +196,14 @@ export function SetLastWorkspace(arg1) {
 
 export function SetTheme(arg1) {
   return window['go']['main']['App']['SetTheme'](arg1);
+}
+
+export function UpdateNovel(arg1, arg2, arg3) {
+  return window['go']['main']['App']['UpdateNovel'](arg1, arg2, arg3);
+}
+
+export function UpsertAIProvider(arg1) {
+  return window['go']['main']['App']['UpsertAIProvider'](arg1);
 }
 
 export function WindowClose() {
