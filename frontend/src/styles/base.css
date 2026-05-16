@@ -19,7 +19,7 @@ body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 14px;
-  transition: background-color 0.4s ease, color 0.4s ease;
+  transition: background-color var(--duration-slow) ease, color var(--duration-slow) ease;
 }
 
 .hidden {
@@ -46,7 +46,7 @@ body {
   border-bottom: 1px solid var(--toolbar-border);
   height: 48px;
   flex-shrink: 0;
-  transition: background-color 0.4s ease, border-color 0.4s ease;
+  transition: background-color var(--duration-slow) ease, border-color var(--duration-slow) ease;
 }
 
 .toolbar-left,
@@ -103,6 +103,10 @@ body {
   color: var(--warning);
 }
 
+.save-status.saving {
+  color: var(--accent);
+}
+
 .word-count {
   font-size: 12px;
   color: var(--text-muted);
@@ -122,7 +126,10 @@ body {
   border-radius: var(--radius-md);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
 }
 
 .icon-btn:hover {
@@ -169,10 +176,19 @@ body {
   display: flex;
   flex: 1;
   overflow: hidden;
-  gap: 24px;
-  padding: 24px 32px 28px;
+  gap: var(--space-panel);
+  padding: var(--space-page-y) var(--space-page-x) calc(var(--space-page-y) + 4px);
   background-color: var(--bg-primary);
   background-image: var(--bg-texture);
+}
+
+#app.is-writing .main-container {
+  gap: 0;
+  padding: 0;
+}
+
+#app.is-detail .main-container {
+  padding: var(--space-page-y) var(--space-page-x) calc(var(--space-page-y) + 4px);
 }
 
 .library-shell,
@@ -180,12 +196,12 @@ body {
   flex: 1;
   min-width: 0;
   display: flex;
-  gap: 24px;
+  gap: var(--space-panel);
   overflow: hidden;
 }
 
 .writing-view {
-  gap: 18px;
+  gap: 0;
 }
 
 /* ========== 侧边栏 ========== */
@@ -193,11 +209,14 @@ body {
   width: 280px;
   background-color: var(--sidebar-bg);
   border: 1px solid var(--sidebar-border);
-  border-radius: 8px;
+  border-radius: var(--panel-radius);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    width var(--duration-base) var(--ease-standard),
+    opacity var(--duration-base) var(--ease-standard),
+    border-color var(--duration-base) var(--ease-standard);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
@@ -205,12 +224,15 @@ body {
 .chapter-sidebar {
   width: 260px;
   background-color: var(--sidebar-bg);
-  border: 1px solid var(--sidebar-border);
-  border-radius: 8px;
+  border: none;
+  border-right: 1px solid var(--sidebar-border);
+  border-radius: 0;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  transition: all 0.25s ease;
+  transition:
+    width var(--duration-base) var(--ease-standard),
+    opacity var(--duration-base) var(--ease-standard);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
@@ -251,7 +273,7 @@ body {
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--duration-fast) ease;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -310,7 +332,9 @@ body {
   border-radius: var(--radius-sm);
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease;
 }
 
 .sidebar-header-btn:hover {
@@ -345,7 +369,7 @@ body {
   opacity: 0.6;
   text-decoration: none;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--duration-fast) ease;
 }
 
 .version-info:hover {
@@ -367,7 +391,7 @@ body {
   cursor: pointer;
   border-radius: var(--radius-sm);
   margin-bottom: 2px;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--duration-fast) ease;
 }
 
 .file-item:hover {
@@ -405,7 +429,7 @@ body {
   background-color: var(--editor-bg);
   background-image: var(--bg-texture);
   border: 1px solid var(--border-light);
-  border-radius: 8px;
+  border-radius: var(--panel-radius);
   min-width: 0;
 }
 
@@ -413,6 +437,14 @@ body {
   border: none;
   border-radius: 0;
   box-shadow: none;
+}
+
+#app.is-writing .chapter-header {
+  padding: 0;
+}
+
+#app.is-writing .chapter-title-input {
+  padding: 14px 24px;
 }
 
 .editor-container.hidden {
@@ -440,29 +472,6 @@ body {
   font-weight: 500;
 }
 
-/* ========== 检视面板 ========== */
-.inspector {
-  width: 280px;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 14px 12px 16px;
-  overflow-y: auto;
-  transition: width 0.25s ease, padding 0.25s ease, border-color 0.25s ease, opacity 0.25s ease;
-}
-
-.inspector.hidden {
-  width: 0;
-  padding: 0;
-  border-left: 0;
-  border-width: 0;
-  opacity: 0;
-  overflow: hidden;
-}
-
 /* ========== 书库页 ========== */
 .library-view {
   flex: 1;
@@ -472,7 +481,7 @@ body {
   overflow: hidden;
   background-color: var(--library-bg);
   border: 1px solid var(--border-light);
-  border-radius: 8px;
+  border-radius: var(--panel-radius);
   box-shadow: var(--shadow-sm);
 }
 
@@ -485,7 +494,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 24px 28px 18px;
+  padding: var(--space-panel) 28px 18px;
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -521,7 +530,10 @@ body {
   color: var(--text-primary);
   font-size: 13px;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  transition:
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    opacity var(--duration-fast) ease;
 }
 
 .library-action-btn:hover:not(:disabled) {
@@ -550,12 +562,15 @@ body {
   min-height: 86px;
   padding: 14px 16px;
   border: 1px solid var(--border-light);
-  border-radius: 8px;
+  border-radius: var(--panel-radius);
   background-color: var(--library-item-bg);
   color: var(--text-primary);
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  transition:
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
 }
 
 .library-list-item:hover {
@@ -609,12 +624,12 @@ body {
   overflow: hidden;
   background-color: var(--library-bg);
   border: 1px solid var(--border-light);
-  border-radius: 8px;
+  border-radius: var(--panel-radius);
   box-shadow: var(--shadow-sm);
 }
 
 .detail-header {
-  padding: 24px 28px 18px;
+  padding: var(--space-panel) 28px 18px;
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -646,7 +661,7 @@ body {
 .detail-section {
   background-color: var(--library-item-bg);
   border: 1px solid var(--border-light);
-  border-radius: 8px;
+  border-radius: var(--panel-radius);
   padding: 16px;
 }
 
@@ -725,7 +740,9 @@ body {
   padding: 8px 12px;
   font-size: 13px;
   cursor: pointer;
-  transition: opacity 0.15s ease, background-color 0.15s ease;
+  transition:
+    opacity var(--duration-fast) ease,
+    background-color var(--duration-fast) ease;
   background-color: var(--bg-tertiary);
   color: var(--text-primary);
 }
@@ -743,137 +760,6 @@ body {
 .detail-btn:disabled {
   opacity: 0.45;
   cursor: default;
-}
-
-.inspector-section {
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 12px 12px;
-}
-
-.inspector-title {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-}
-
-.inspector-textarea {
-  width: 100%;
-  min-height: 120px;
-  resize: vertical;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-  padding: 8px 10px;
-  font-size: 13px;
-  line-height: 1.6;
-  outline: none;
-}
-
-.inspector-textarea:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(166, 139, 111, 0.12);
-}
-
-.inspector-textarea:disabled {
-  background-color: var(--bg-tertiary);
-  color: var(--text-muted);
-}
-
-.inspector-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 6px 0;
-  border-top: 1px dashed var(--border-light);
-}
-
-.inspector-item:first-of-type {
-  border-top: none;
-  padding-top: 0;
-}
-
-.inspector-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.inspector-value {
-  font-size: 12px;
-  color: var(--text-primary);
-  text-align: right;
-  max-width: 140px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.inspector-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.inspector-input {
-  width: 100%;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-  padding: 8px 10px;
-  font-size: 13px;
-  line-height: 1.4;
-  outline: none;
-}
-
-.inspector-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(166, 139, 111, 0.12);
-}
-
-.inspector-input:disabled {
-  background-color: var(--bg-tertiary);
-  color: var(--text-muted);
-}
-
-.inspector-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  flex-wrap: wrap;
-}
-
-.inspector-btn {
-  flex: 1;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-.inspector-btn.primary {
-  background-color: var(--accent);
-  color: #fff;
-}
-
-.inspector-btn.danger {
-  background-color: var(--danger);
-  color: var(--danger-foreground);
-}
-
-.inspector-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* ========== 弹出菜单 ========== */
@@ -903,7 +789,7 @@ body {
   font-size: 13px;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--duration-fast) ease;
 }
 
 .popup-item:hover {
@@ -925,7 +811,7 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 1500;
-  animation: fadeIn 0.15s ease;
+  animation: fadeIn var(--duration-fast) ease;
 }
 
 .settings-page.hidden {

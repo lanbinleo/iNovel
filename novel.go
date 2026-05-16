@@ -22,6 +22,15 @@ type ChapterSummary struct {
 	OrderKey int    `json:"order_key"`
 }
 
+type RecentChapterSummary struct {
+	NovelID      string `json:"novel_id"`
+	NovelTitle   string `json:"novel_title"`
+	ChapterID    string `json:"chapter_id"`
+	ChapterTitle string `json:"chapter_title"`
+	Outline      string `json:"outline"`
+	UpdatedAt    string `json:"updated_at"`
+}
+
 type ChapterContent struct {
 	ID      string `json:"id"`
 	Title   string `json:"title"`
@@ -172,6 +181,43 @@ func (a *App) ListChapters(novelID string) ([]ChapterSummary, error) {
 	}
 
 	return chapters, nil
+}
+
+func (a *App) ListRecentChapters() ([]RecentChapterSummary, error) {
+	db, err := a.ensureDB()
+	if err != nil {
+		return []RecentChapterSummary{}, nil
+	}
+
+	rows, err := db.Query(`
+		SELECT n.id, n.title, c.id, c.title, c.outline, c.updated_at
+		FROM chapters c
+		JOIN novels n ON n.id = c.novel_id
+		ORDER BY c.updated_at DESC
+		LIMIT 30;
+	`)
+	if err != nil {
+		return []RecentChapterSummary{}, nil
+	}
+	defer rows.Close()
+
+	var recent []RecentChapterSummary
+	for rows.Next() {
+		var item RecentChapterSummary
+		if err := rows.Scan(
+			&item.NovelID,
+			&item.NovelTitle,
+			&item.ChapterID,
+			&item.ChapterTitle,
+			&item.Outline,
+			&item.UpdatedAt,
+		); err != nil {
+			continue
+		}
+		recent = append(recent, item)
+	}
+
+	return recent, nil
 }
 
 func (a *App) CreateChapter(novelID string, title string) (*ChapterSummary, error) {

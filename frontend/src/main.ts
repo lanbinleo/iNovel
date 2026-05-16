@@ -1,7 +1,7 @@
 import './style.css';
 
 // 导入Wails运行时
-import { GetConfig, SetTheme, SetEditorWidth, WindowMinimize, WindowMaximize, WindowClose, ExportAsTxt, ExportAsImagePathWithName, SaveImageData, GetVersion, CheckUpdate, OpenURL, ListNovels, CreateNovel, UpdateNovel, DeleteNovel, ListChapters, CreateChapter, DeleteChapter, MoveChapter, GetChapterContent, SaveChapterContent, ImportNovelFromDialog } from '../wailsjs/go/main/App';
+import { GetConfig, SetTheme, SetEditorWidth, WindowMinimize, WindowMaximize, WindowClose, ExportAsTxt, ExportAsImagePathWithName, SaveImageData, GetVersion, CheckUpdate, OpenURL, ListNovels, ListRecentChapters, CreateNovel, UpdateNovel, DeleteNovel, ListChapters, CreateChapter, DeleteChapter, MoveChapter, GetChapterContent, SaveChapterContent, ImportNovelFromDialog } from '../wailsjs/go/main/App';
 
 // 导入编辑器
 import { Editor, createEditor } from './editor/Editor';
@@ -24,6 +24,15 @@ interface ChapterSummary {
     order_key: number;
 }
 
+interface RecentChapterSummary {
+    novel_id: string;
+    novel_title: string;
+    chapter_id: string;
+    chapter_title: string;
+    outline: string;
+    updated_at: string;
+}
+
 interface ChapterContent {
     id: string;
     title: string;
@@ -39,7 +48,8 @@ interface Novel {
 // ============ 全局状态 ============
 let isDirty = false;
 let autoSaveTimer: number | null = null;
-const AUTO_SAVE_INTERVAL = 30000;
+const AUTO_SAVE_INTERVAL = 5000;
+const DRAFT_PREFIX = 'inovel:draft:';
 let editorWidthMode: 'narrow' | 'medium' | 'wide' = 'medium';
 let currentTheme: 'light' | 'dark' = 'light';
 let currentFontSize: 'small' | 'medium' | 'large' = 'medium';
@@ -48,11 +58,13 @@ let currentChapterId: string | null = null;
 let currentLibraryCategory: 'recent' | 'novel' = 'recent';
 let novels: NovelSummary[] = [];
 let chapters: ChapterSummary[] = [];
+let recentChapters: RecentChapterSummary[] = [];
 let editor: Editor;
 let novelDirty = false;
-let currentNovelSnapshot: { title: string; summary: string } | null = null;
+let saveInFlight: Promise<boolean> | null = null;
 
 // ============ DOM 元素 ============
+const appRoot = document.getElementById('app') as HTMLDivElement;
 const editorContainer = document.getElementById('editor') as HTMLDivElement;
 const fileTitle = document.getElementById('file-title') as HTMLSpanElement;
 const saveStatus = document.getElementById('save-status') as HTMLSpanElement;
@@ -90,6 +102,8 @@ const chapterTitleInput = document.getElementById('chapter-title-input') as HTML
 const chapterOutlineInput = document.getElementById('chapter-outline-input') as HTMLTextAreaElement;
 const chapterInfoTitle = document.getElementById('chapter-info-title') as HTMLSpanElement;
 const chapterInfoWords = document.getElementById('chapter-info-words') as HTMLSpanElement;
+const detailChapterNovel = document.getElementById('detail-chapter-novel') as HTMLSpanElement;
+const detailChapterCount = document.getElementById('detail-chapter-count') as HTMLSpanElement;
 const novelInfoTitle = document.getElementById('novel-info-title') as HTMLSpanElement;
 const importBtn = document.getElementById('import-btn') as HTMLButtonElement;
 const novelTitleInput = document.getElementById('novel-title-input') as HTMLInputElement;
@@ -123,6 +137,48 @@ function updateSaveStatus(saved: boolean) {
     }
 }
 
+function updateSavingStatus() {
+    saveStatus.textContent = '●';
+    saveStatus.className = 'save-status saving';
+    saveStatus.title = '保存中';
+}
+
+function getDraftKey(chapterId: string): string {
+    return `${DRAFT_PREFIX}${chapterId}`;
+}
+
+function writeLocalDraft() {
+    if (!currentChapterId) return;
+    try {
+        localStorage.setItem(getDraftKey(currentChapterId), JSON.stringify({
+            title: chapterTitleInput.value,
+            outline: chapterOutlineInput ? chapterOutlineInput.value : '',
+            content: editor.getContent(),
+            saved_at: new Date().toISOString()
+        }));
+    } catch (error) {
+        console.error('写入本地草稿失败:', error);
+    }
+}
+
+function readLocalDraft(chapterId: string): { title: string; outline: string; content: string; saved_at: string } | null {
+    try {
+        const raw = localStorage.getItem(getDraftKey(chapterId));
+        return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+        console.error('读取本地草稿失败:', error);
+        return null;
+    }
+}
+
+function clearLocalDraft(chapterId: string) {
+    try {
+        localStorage.removeItem(getDraftKey(chapterId));
+    } catch (error) {
+        console.error('清理本地草稿失败:', error);
+    }
+}
+
 function updateFileTitle() {
     if (currentChapterId) {
         const title = chapterTitleInput.value.trim();
@@ -138,30 +194,82 @@ function updateFileTitle() {
 // ============ 小说与章节 ============
 
 function showLibraryView() {
+    appRoot?.classList.remove('is-writing', 'is-detail');
     libraryShell?.classList.remove('hidden');
     writingView?.classList.add('hidden');
     detailView?.classList.add('hidden');
     libraryHomeBtn?.classList.add('hidden');
     bookDetailBtn?.classList.add('hidden');
+    setBookDetailButtonMode('detail');
 }
 
 function showEditorView() {
+    appRoot?.classList.add('is-writing');
+    appRoot?.classList.remove('is-detail');
     libraryShell?.classList.add('hidden');
     writingView?.classList.remove('hidden');
     detailView?.classList.add('hidden');
     editorView?.classList.remove('hidden');
     libraryHomeBtn?.classList.remove('hidden');
     bookDetailBtn?.classList.remove('hidden');
+    setBookDetailButtonMode('detail');
     editor.focus();
 }
 
 function showDetailView() {
     if (!currentNovelId) return;
+    appRoot?.classList.add('is-detail');
+    appRoot?.classList.remove('is-writing');
+    refreshDetailView();
     libraryShell?.classList.add('hidden');
     writingView?.classList.add('hidden');
     detailView?.classList.remove('hidden');
     libraryHomeBtn?.classList.remove('hidden');
-    bookDetailBtn?.classList.add('hidden');
+    bookDetailBtn?.classList.remove('hidden');
+    setBookDetailButtonMode('back');
+}
+
+function setBookDetailButtonMode(mode: 'detail' | 'back') {
+    if (!bookDetailBtn) return;
+    if (mode === 'back') {
+        bookDetailBtn.title = '返回写作';
+        bookDetailBtn.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M19 12H5"/>
+                <path d="M12 5l-7 7 7 7"/>
+            </svg>
+        `;
+        return;
+    }
+    bookDetailBtn.title = '书籍详情';
+    bookDetailBtn.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 10v6"/>
+            <path d="M12 7h.01"/>
+        </svg>
+    `;
+}
+
+function refreshDetailView() {
+    const novel = novels.find(n => n.id === currentNovelId);
+    if (novelInfoTitle) {
+        novelInfoTitle.textContent = novel?.title || '未命名小说';
+    }
+    if (detailChapterNovel) {
+        detailChapterNovel.textContent = novel?.title || '未命名小说';
+    }
+    if (detailChapterCount) {
+        detailChapterCount.textContent = `${chapters.length}`;
+    }
+
+    const chapter = chapters.find(c => c.id === currentChapterId);
+    if (chapterInfoTitle) {
+        chapterInfoTitle.textContent = chapterTitleInput.value.trim() || chapter?.title || '未选择章节';
+    }
+    if (chapterOutlineInput && currentChapterId && !chapterOutlineInput.value && chapter?.outline) {
+        chapterOutlineInput.value = chapter.outline;
+    }
 }
 
 function setChapterHeaderEnabled(enabled: boolean, placeholder: string) {
@@ -204,9 +312,6 @@ function setNovelFields(novel: NovelSummary | null) {
     if (novelDeleteBtn) {
         novelDeleteBtn.disabled = !enabled;
     }
-    currentNovelSnapshot = enabled
-        ? { title: novel!.title, summary: novel!.summary || '' }
-        : null;
     novelDirty = false;
     updateNovelSaveState();
 }
@@ -270,35 +375,35 @@ function renderNovelList() {
 function renderLibraryList() {
     if (!libraryList) return;
     if (libraryTitle) libraryTitle.textContent = 'Recent';
-    if (librarySubtitle) librarySubtitle.textContent = novels.length > 0 ? '最近更新的小说' : '还没有小说';
+    if (librarySubtitle) librarySubtitle.textContent = recentChapters.length > 0 ? '最近更新的章节' : '还没有更新记录';
 
     libraryList.innerHTML = '';
-    if (novels.length === 0) {
-        libraryList.innerHTML = '<div class="library-empty">还没有小说。可以从左侧新建，或从工具栏导入。</div>';
+    if (recentChapters.length === 0) {
+        libraryList.innerHTML = '<div class="library-empty">还没有最近更新的章节。可以从左侧新建，或从工具栏导入。</div>';
         return;
     }
 
-    for (const novel of novels) {
+    for (const recent of recentChapters) {
         const item = document.createElement('button');
         item.className = 'library-list-item recent-novel-item';
         item.type = 'button';
 
         const title = document.createElement('div');
         title.className = 'library-list-title';
-        title.textContent = novel.title || '未命名小说';
+        title.textContent = recent.chapter_title || '未命名章节';
 
         const summary = document.createElement('div');
         summary.className = 'library-list-sub';
-        summary.textContent = novel.summary || '暂无简介';
+        summary.textContent = `${recent.novel_title || '未命名小说'} · ${recent.outline || '暂无梗概'}`;
 
         const meta = document.createElement('div');
         meta.className = 'library-list-meta';
-        meta.textContent = novel.updated_at ? `更新于 ${formatDate(novel.updated_at)}` : '最近更新';
+        meta.textContent = recent.updated_at ? `更新于 ${formatDateTime(recent.updated_at)}` : '最近更新';
 
         item.appendChild(title);
         item.appendChild(summary);
         item.appendChild(meta);
-        item.addEventListener('click', () => selectNovel(novel.id));
+        item.addEventListener('click', () => openRecentChapter(recent));
         libraryList.appendChild(item);
     }
 }
@@ -343,36 +448,38 @@ function renderChapterList() {
     updateChapterMoveState();
 }
 
-function formatDate(value: string): string {
+function formatDateTime(value: string): string {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString('zh-CN', {
+    return date.toLocaleString('zh-CN', {
         year: 'numeric',
         month: '2-digit',
-        day: '2-digit'
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
     });
 }
 
 async function confirmDiscardIfDirty(): Promise<boolean> {
     if (!isDirty && !novelDirty) return true;
-    const confirmed = await showConfirmModal('未保存', '当前内容未保存，是否继续？');
-    if (confirmed) {
-        updateSaveStatus(true);
-        if (novelDirty && currentNovelSnapshot) {
-            if (novelTitleInput) {
-                novelTitleInput.value = currentNovelSnapshot.title;
-            }
-            if (novelSummaryInput) {
-                novelSummaryInput.value = currentNovelSnapshot.summary;
-            }
-            if (novelInfoTitle) {
-                novelInfoTitle.textContent = currentNovelSnapshot.title || '未命名小说';
-            }
+
+    if (isDirty) {
+        const saved = await saveCurrentChapter({ silent: true });
+        if (!saved) {
+            await showConfirmModal('保存失败', '当前章节还没有保存成功，请先手动保存。');
+            return false;
         }
-        novelDirty = false;
-        updateNovelSaveState();
     }
-    return confirmed;
+
+    if (novelDirty) {
+        const saved = await handleSaveNovel();
+        if (!saved) {
+            await showConfirmModal('保存失败', '作品信息还没有保存成功，请先手动保存。');
+            return false;
+        }
+    }
+
+    return true;
 }
 
 async function loadNovels() {
@@ -380,11 +487,20 @@ async function loadNovels() {
         const list = await ListNovels();
         novels = (list || []) as NovelSummary[];
         renderNovelList();
+    } catch (error) {
+        console.error('加载小说列表失败:', error);
+    }
+}
+
+async function loadRecentChapters() {
+    try {
+        const list = await ListRecentChapters();
+        recentChapters = (list || []) as RecentChapterSummary[];
         if (currentLibraryCategory === 'recent') {
             renderLibraryList();
         }
     } catch (error) {
-        console.error('加载小说列表失败:', error);
+        console.error('加载最近章节失败:', error);
     }
 }
 
@@ -396,6 +512,33 @@ async function loadChapters(novelId: string) {
     } catch (error) {
         console.error('加载章节列表失败:', error);
     }
+}
+
+async function openRecentChapter(recent: RecentChapterSummary) {
+    if (currentChapterId !== recent.chapter_id) {
+        const ok = await confirmDiscardIfDirty();
+        if (!ok) return;
+    }
+
+    currentLibraryCategory = 'novel';
+    currentNovelId = recent.novel_id;
+    currentChapterId = null;
+    await loadChapters(recent.novel_id);
+
+    const novel = novels.find(n => n.id === recent.novel_id);
+    if (novelInfoTitle) {
+        novelInfoTitle.textContent = novel?.title || recent.novel_title || '-';
+    }
+    setNovelFields(novel || {
+        id: recent.novel_id,
+        title: recent.novel_title || '未命名小说',
+        summary: '',
+        updated_at: recent.updated_at || ''
+    });
+
+    renderNovelList();
+    renderChapterList();
+    await selectChapter(recent.chapter_id);
 }
 
 async function selectRecent() {
@@ -416,6 +559,7 @@ async function selectRecent() {
     if (novelInfoTitle) novelInfoTitle.textContent = '-';
     updateFileTitle();
     renderNovelList();
+    await loadRecentChapters();
     renderLibraryList();
     showLibraryView();
 }
@@ -472,8 +616,20 @@ async function selectChapter(chapterId: string) {
             chapterOutlineInput.value = chapter.outline || '';
         }
         editor.setContent(chapter.content || '');
+        const draft = readLocalDraft(chapterId);
+        const draftApplied = !!draft && (draft.content !== (chapter.content || '') || draft.title !== (chapter.title || '') || draft.outline !== (chapter.outline || ''));
+        if (draftApplied && draft) {
+            chapterTitleInput.value = draft.title || chapterTitleInput.value;
+            if (chapterOutlineInput) {
+                chapterOutlineInput.value = draft.outline || '';
+            }
+            editor.setContent(draft.content || '');
+            updateSaveStatus(false);
+        }
         updateWordCount();
-        updateSaveStatus(true);
+        if (!draftApplied) {
+            updateSaveStatus(true);
+        }
         updateFileTitle();
         if (chapterInfoTitle) {
             chapterInfoTitle.textContent = chapter.title || '未命名章节';
@@ -518,7 +674,7 @@ async function handleCreateNovel() {
 async function handleSaveNovel() {
     if (!currentNovelId) {
         await showConfirmModal('提示', '请先选择小说');
-        return;
+        return false;
     }
     const title = novelTitleInput ? novelTitleInput.value.trim() : '';
     const summary = novelSummaryInput ? novelSummaryInput.value.trim() : '';
@@ -526,14 +682,16 @@ async function handleSaveNovel() {
         await UpdateNovel(currentNovelId, title || '未命名小说', summary);
         novelDirty = false;
         updateNovelSaveState();
-        currentNovelSnapshot = { title: title || '未命名小说', summary: summary || '' };
         await loadNovels();
+        await loadRecentChapters();
         if (novelInfoTitle) {
             novelInfoTitle.textContent = title || '未命名小说';
         }
+        return true;
     } catch (error) {
         console.error('保存小说失败:', error);
         alert('保存小说失败: ' + error);
+        return false;
     }
 }
 
@@ -668,27 +826,49 @@ async function handleImportNovel() {
     }
 }
 
-async function handleSave() {
-    const content = editor.getContent();
+async function saveCurrentChapter(options: { silent?: boolean } = {}): Promise<boolean> {
+    if (saveInFlight) return saveInFlight;
 
-    try {
-        if (currentChapterId) {
-            const title = chapterTitleInput.value.trim() || '未命名章节';
-            const outline = chapterOutlineInput ? chapterOutlineInput.value.trim() : '';
-            await SaveChapterContent(currentChapterId, title, outline, content);
-            if (currentNovelId) {
-                await loadChapters(currentNovelId);
-                renderChapterList();
+    const content = editor.getContent();
+    saveInFlight = (async () => {
+        try {
+            if (currentChapterId) {
+                updateSavingStatus();
+                const title = chapterTitleInput.value.trim() || '未命名章节';
+                const outline = chapterOutlineInput ? chapterOutlineInput.value.trim() : '';
+                await SaveChapterContent(currentChapterId, title, outline, content);
+                clearLocalDraft(currentChapterId);
+                if (currentNovelId) {
+                    await loadChapters(currentNovelId);
+                    await loadRecentChapters();
+                    renderChapterList();
+                }
+                updateFileTitle();
+                updateSaveStatus(true);
+                refreshDetailView();
+                return true;
             }
-            updateFileTitle();
-            updateSaveStatus(true);
-            return;
+            if (!options.silent) {
+                await showConfirmModal('提示', '请先选择章节');
+            }
+            return false;
+        } catch (error) {
+            console.error('保存失败:', error);
+            if (!options.silent) {
+                alert('保存失败: ' + error);
+            }
+            updateSaveStatus(false);
+            return false;
+        } finally {
+            saveInFlight = null;
         }
-        await showConfirmModal('提示', '请先选择章节');
-    } catch (error) {
-        console.error('保存失败:', error);
-        alert('保存失败: ' + error);
-    }
+    })();
+
+    return saveInFlight;
+}
+
+async function handleSave() {
+    await saveCurrentChapter();
 }
 
 function startAutoSave() {
@@ -696,7 +876,7 @@ function startAutoSave() {
 
     autoSaveTimer = window.setInterval(() => {
         if (isDirty && currentChapterId && editor.getPlainText().trim() !== '') {
-            handleSave();
+            void saveCurrentChapter({ silent: true });
         }
     }, AUTO_SAVE_INTERVAL);
 }
@@ -710,6 +890,26 @@ function toggleSidebar() {
         return;
     }
     sidebar?.classList.toggle('hidden');
+}
+
+async function handleBookDetailClick() {
+    if (detailView && !detailView.classList.contains('hidden')) {
+        if (currentChapterId) {
+            showEditorView();
+        } else {
+            await selectRecent();
+        }
+        return;
+    }
+
+    if (isDirty) {
+        const saved = await saveCurrentChapter({ silent: true });
+        if (!saved) {
+            await showConfirmModal('保存失败', '当前章节还没有保存成功，请先手动保存。');
+            return;
+        }
+    }
+    showDetailView();
 }
 
 async function toggleWidthMode() {
@@ -795,6 +995,10 @@ settingsPage?.addEventListener('click', (e) => {
     if (e.target === settingsPage) {
         closeSettings();
     }
+});
+
+window.addEventListener('beforeunload', () => {
+    writeLocalDraft();
 });
 
 // ============ 导出功能 ============
@@ -955,7 +1159,7 @@ async function handleExportImage() {
 saveBtn.addEventListener('click', handleSave);
 toggleSidebarBtn.addEventListener('click', toggleSidebar);
 if (libraryHomeBtn) libraryHomeBtn.addEventListener('click', () => selectRecent());
-if (bookDetailBtn) bookDetailBtn.addEventListener('click', showDetailView);
+if (bookDetailBtn) bookDetailBtn.addEventListener('click', handleBookDetailClick);
 widthModeBtn.addEventListener('click', toggleWidthMode);
 if (themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
 if (fontSizeBtn) fontSizeBtn.addEventListener('click', toggleFontSizePopup);
@@ -974,6 +1178,7 @@ if (chapterTitleInput) {
     chapterTitleInput.addEventListener('input', () => {
         updateFileTitle();
         updateSaveStatus(false);
+        writeLocalDraft();
         if (chapterInfoTitle) {
             chapterInfoTitle.textContent = chapterTitleInput.value.trim() || '未命名章节';
         }
@@ -982,6 +1187,7 @@ if (chapterTitleInput) {
 if (chapterOutlineInput) {
     chapterOutlineInput.addEventListener('input', () => {
         updateSaveStatus(false);
+        writeLocalDraft();
     });
 }
 if (novelTitleInput) {
@@ -1016,7 +1222,16 @@ const closeBtn = document.getElementById('close-btn');
 
 if (minimizeBtn) minimizeBtn.addEventListener('click', () => WindowMinimize());
 if (maximizeBtn) maximizeBtn.addEventListener('click', () => WindowMaximize());
-if (closeBtn) closeBtn.addEventListener('click', () => WindowClose());
+if (closeBtn) closeBtn.addEventListener('click', async () => {
+    if (isDirty) {
+        const saved = await saveCurrentChapter({ silent: true });
+        if (!saved) {
+            await showConfirmModal('保存失败', '当前章节还没有保存成功，暂不关闭窗口。');
+            return;
+        }
+    }
+    WindowClose();
+});
 
 // 字体大小选项
 fontSizePopup?.querySelectorAll('.popup-item').forEach(item => {
@@ -1035,6 +1250,7 @@ async function init() {
             updateWordCount();
             updateSaveStatus(false);
             updateFileTitle();
+            writeLocalDraft();
         },
         onCursorMove: () => {}
     });
@@ -1042,6 +1258,7 @@ async function init() {
     setChapterHeaderEnabled(false, '请选择章节');
     setNovelFields(null);
     await loadNovels();
+    await loadRecentChapters();
     if (novelInfoTitle) novelInfoTitle.textContent = '-';
     renderLibraryList();
     updateFileTitle();

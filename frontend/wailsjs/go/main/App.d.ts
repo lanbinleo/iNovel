@@ -52,6 +52,8 @@ export function ListChapters(arg1:string):Promise<Array<main.ChapterSummary>>;
 
 export function ListNovels():Promise<Array<main.NovelSummary>>;
 
+export function ListRecentChapters():Promise<Array<main.RecentChapterSummary>>;
+
 export function LoadFileContent(arg1:string):Promise<main.FileInfo>;
 
 export function LoadWorkspaceFile(arg1:string):Promise<main.Workspace>;

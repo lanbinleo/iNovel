@@ -102,6 +102,10 @@ export function ListNovels() {
   return window['go']['main']['App']['ListNovels']();
 }
 
+export function ListRecentChapters() {
+  return window['go']['main']['App']['ListRecentChapters']();
+}
+
 export function LoadFileContent(arg1) {
   return window['go']['main']['App']['LoadFileContent'](arg1);
 }

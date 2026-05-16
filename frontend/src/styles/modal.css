@@ -12,7 +12,7 @@
     align-items: center;
     justify-content: center;
     z-index: 2000;
-    animation: fadeIn 0.15s ease;
+    animation: fadeIn var(--duration-fast) ease;
 }
 
 .modal-overlay.hidden {
@@ -31,7 +31,7 @@
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     min-width: 320px;
     max-width: 400px;
-    animation: slideIn 0.2s ease;
+    animation: slideIn var(--duration-base) ease;
 }
 
 @keyframes slideIn {
@@ -75,7 +75,9 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color var(--duration-fast) ease,
+        box-shadow var(--duration-fast) ease;
 }
 
 .modal-input:focus {
@@ -100,7 +102,10 @@
     font-weight: 500;
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition:
+        background-color var(--duration-fast) ease,
+        color var(--duration-fast) ease,
+        transform var(--duration-fast) ease;
     border: none;
 }
 
@@ -141,7 +146,7 @@
     align-items: center;
     justify-content: center;
     z-index: 2000;
-    animation: fadeIn 0.15s ease;
+    animation: fadeIn var(--duration-fast) ease;
 }
 
 .export-preview-overlay.hidden {
@@ -159,7 +164,7 @@
     max-height: 700px;
     display: flex;
     flex-direction: column;
-    animation: slideIn 0.2s ease;
+    animation: slideIn var(--duration-base) ease;
 }
 
 .export-preview-header {
@@ -188,7 +193,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
+    transition:
+        background-color var(--duration-fast) ease,
+        color var(--duration-fast) ease;
 }
 
 .export-preview-close:hover {
@@ -240,7 +247,10 @@
     color: var(--text-secondary);
     cursor: pointer;
     border-radius: calc(var(--radius-md) - 2px);
-    transition: all 0.15s ease;
+    transition:
+        background-color var(--duration-fast) ease,
+        color var(--duration-fast) ease,
+        box-shadow var(--duration-fast) ease;
 }
 
 .export-option-btn:hover {
@@ -275,7 +285,10 @@
     padding: 40px 30px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     border-radius: 4px;
-    transition: width 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+    transition:
+        width var(--duration-base) ease,
+        background-color var(--duration-base) ease,
+        color var(--duration-base) ease;
     margin: 0 auto;
     max-width: calc(100% - 40px);
 }

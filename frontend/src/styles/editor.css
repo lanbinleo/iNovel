@@ -16,7 +16,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     cursor: text;
-    transition: color 0.4s ease;
+    transition: color var(--duration-slow) ease;
 }
 
 /* 宽度模式 */

@@ -204,6 +204,28 @@ export namespace main {
 	        this.updated_at = source["updated_at"];
 	    }
 	}
+	export class RecentChapterSummary {
+	    novel_id: string;
+	    novel_title: string;
+	    chapter_id: string;
+	    chapter_title: string;
+	    outline: string;
+	    updated_at: string;
+
+	    static createFrom(source: any = {}) {
+	        return new RecentChapterSummary(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.novel_id = source["novel_id"];
+	        this.novel_title = source["novel_title"];
+	        this.chapter_id = source["chapter_id"];
+	        this.chapter_title = source["chapter_title"];
+	        this.outline = source["outline"];
+	        this.updated_at = source["updated_at"];
+	    }
+	}
 	
 	export class UpdateInfo {
 	    has_update: boolean;
@@ -239,4 +261,3 @@ export namespace main {
 	}
 
 }
-
