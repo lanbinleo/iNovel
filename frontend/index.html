@@ -26,6 +26,13 @@
                     <path d="M5 10.5V20h14v-9.5"/>
                 </svg>
             </button>
+            <button id="book-detail-btn" class="icon-btn hidden" title="书籍详情" style="--wails-draggable:no-drag">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M12 10v6"/>
+                    <path d="M12 7h.01"/>
+                </svg>
+            </button>
             <div class="file-info">
                 <span id="file-title" class="file-title" style="--wails-draggable:no-drag">书库</span>
                 <span id="save-status" class="save-status">·</span>
@@ -174,18 +181,50 @@
                 ></div>
             </div>
         </div>
-        <div id="metadata-store" class="hidden" aria-hidden="true">
-            <textarea id="chapter-outline-input" disabled></textarea>
-            <span id="chapter-info-title">-</span>
-            <span id="chapter-info-words">0</span>
-            <button id="chapter-move-up-btn" disabled></button>
-            <button id="chapter-move-down-btn" disabled></button>
-            <button id="chapter-delete-btn" disabled></button>
-            <span id="novel-info-title">-</span>
-            <input id="novel-title-input" type="text" disabled />
-            <textarea id="novel-summary-input" disabled></textarea>
-            <button id="novel-save-btn" disabled></button>
-            <button id="novel-delete-btn" disabled></button>
+        <div id="detail-view" class="detail-view hidden">
+            <div class="detail-header">
+                <div>
+                    <div class="detail-title">书籍详情</div>
+                    <div id="novel-info-title" class="detail-subtitle">-</div>
+                </div>
+            </div>
+            <div class="detail-body">
+                <section class="detail-section">
+                    <div class="detail-section-title">作品</div>
+                    <label class="detail-field">
+                        <span>标题</span>
+                        <input id="novel-title-input" class="detail-input" type="text" placeholder="请输入小说标题" disabled />
+                    </label>
+                    <label class="detail-field">
+                        <span>简介</span>
+                        <textarea id="novel-summary-input" class="detail-textarea" placeholder="为作品写一段简介..." disabled></textarea>
+                    </label>
+                    <div class="detail-actions">
+                        <button id="novel-save-btn" class="detail-btn primary" disabled>保存作品</button>
+                        <button id="novel-delete-btn" class="detail-btn danger" disabled>删除作品</button>
+                    </div>
+                </section>
+                <section class="detail-section">
+                    <div class="detail-section-title">当前章节</div>
+                    <div class="detail-row">
+                        <span>章节</span>
+                        <span id="chapter-info-title">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>字数</span>
+                        <span id="chapter-info-words">0</span>
+                    </div>
+                    <label class="detail-field">
+                        <span>大纲</span>
+                        <textarea id="chapter-outline-input" class="detail-textarea" placeholder="为本章节写一段梗概..." disabled></textarea>
+                    </label>
+                    <div class="detail-actions">
+                        <button id="chapter-move-up-btn" class="detail-btn" disabled>上移</button>
+                        <button id="chapter-move-down-btn" class="detail-btn" disabled>下移</button>
+                        <button id="chapter-delete-btn" class="detail-btn danger" disabled>删除章节</button>
+                    </div>
+                </section>
+            </div>
         </div>
     </div>
 

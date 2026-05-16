@@ -60,12 +60,12 @@ const wordCount = document.getElementById('word-count') as HTMLSpanElement;
 const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
 const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn') as HTMLButtonElement;
 const libraryHomeBtn = document.getElementById('library-home-btn') as HTMLButtonElement;
+const bookDetailBtn = document.getElementById('book-detail-btn') as HTMLButtonElement;
 const widthModeBtn = document.getElementById('width-mode-btn') as HTMLButtonElement;
 const themeToggleBtn = document.getElementById('theme-toggle-btn') as HTMLButtonElement;
 const fontSizeBtn = document.getElementById('font-size-btn') as HTMLButtonElement;
 const fontSizePopup = document.getElementById('font-size-popup') as HTMLDivElement;
 const sidebar = document.getElementById('sidebar') as HTMLDivElement;
-const inspector = document.querySelector('.inspector') as HTMLDivElement;
 const exportBtn = document.getElementById('export-btn') as HTMLButtonElement;
 const exportPopup = document.getElementById('export-popup') as HTMLDivElement;
 const versionText = document.getElementById('version-text') as HTMLSpanElement;
@@ -76,6 +76,7 @@ const settingsPage = document.getElementById('settings-page') as HTMLDivElement;
 const settingsCloseBtn = document.getElementById('settings-close-btn') as HTMLButtonElement;
 const libraryShell = document.getElementById('library-shell') as HTMLDivElement;
 const writingView = document.getElementById('writing-view') as HTMLDivElement;
+const detailView = document.getElementById('detail-view') as HTMLDivElement;
 const editorView = document.getElementById('editor-view') as HTMLDivElement;
 const chapterSidebar = document.getElementById('chapter-sidebar') as HTMLDivElement;
 const libraryTitle = document.getElementById('library-title') as HTMLDivElement;
@@ -139,17 +140,28 @@ function updateFileTitle() {
 function showLibraryView() {
     libraryShell?.classList.remove('hidden');
     writingView?.classList.add('hidden');
-    inspector?.classList.add('hidden');
+    detailView?.classList.add('hidden');
     libraryHomeBtn?.classList.add('hidden');
+    bookDetailBtn?.classList.add('hidden');
 }
 
 function showEditorView() {
     libraryShell?.classList.add('hidden');
     writingView?.classList.remove('hidden');
+    detailView?.classList.add('hidden');
     editorView?.classList.remove('hidden');
-    inspector?.classList.add('hidden');
     libraryHomeBtn?.classList.remove('hidden');
+    bookDetailBtn?.classList.remove('hidden');
     editor.focus();
+}
+
+function showDetailView() {
+    if (!currentNovelId) return;
+    libraryShell?.classList.add('hidden');
+    writingView?.classList.add('hidden');
+    detailView?.classList.remove('hidden');
+    libraryHomeBtn?.classList.remove('hidden');
+    bookDetailBtn?.classList.add('hidden');
 }
 
 function setChapterHeaderEnabled(enabled: boolean, placeholder: string) {
@@ -694,6 +706,9 @@ function toggleSidebar() {
         chapterSidebar?.classList.toggle('hidden');
         return;
     }
+    if (detailView && !detailView.classList.contains('hidden')) {
+        return;
+    }
     sidebar?.classList.toggle('hidden');
 }
 
@@ -940,6 +955,7 @@ async function handleExportImage() {
 saveBtn.addEventListener('click', handleSave);
 toggleSidebarBtn.addEventListener('click', toggleSidebar);
 if (libraryHomeBtn) libraryHomeBtn.addEventListener('click', () => selectRecent());
+if (bookDetailBtn) bookDetailBtn.addEventListener('click', showDetailView);
 widthModeBtn.addEventListener('click', toggleWidthMode);
 if (themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
 if (fontSizeBtn) fontSizeBtn.addEventListener('click', toggleFontSizePopup);
